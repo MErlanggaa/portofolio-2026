@@ -2,7 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
-use Illuminate\Support\Facades\Response;
+use App\Models\Profile;
+use App\Models\Project;
+use App\Models\Experience;
+use App\Models\Education;
+use App\Models\Skill;
+use App\Models\Organization;
 
 /* NOTE: Do Not Remove
 / Livewire asset handling if using sub folder in domain
@@ -18,6 +23,17 @@ Livewire::setScriptRoute(function ($handle) {
 /*
 / END
 */
+
+Route::redirect('/login', '/admin/login')->name('login');
+
 Route::get('/', function () {
-    return view('welcome');
+    $profile = Profile::first();
+    $projects = Project::orderBy('created_at', 'desc')->get();
+    $experiences = Experience::orderBy('start_date', 'desc')->get();
+    $education = Education::orderBy('start_date', 'desc')->get();
+    $skills = Skill::orderBy('proficiency', 'desc')->get();
+    $organizations = Organization::orderBy('start_date', 'desc')->get();
+
+    return view('welcome', compact('profile', 'projects', 'experiences', 'education', 'skills', 'organizations'));
 });
+

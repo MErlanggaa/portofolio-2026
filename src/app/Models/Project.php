@@ -15,5 +15,6 @@ class Project extends Model
         'image',
         'link',
         'tech_stack',
+        'api_stack', // REST API / integration technologies — shown in red tags
     ];
 }

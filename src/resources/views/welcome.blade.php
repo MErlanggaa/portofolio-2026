@@ -1,489 +1,2962 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="en">
+
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ $profile?->name ?? 'Portfolio' }}</title>
+    <meta name="description" content="Portfolio of {{ $profile?->name ?? 'Developer' }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <title>Laravel</title>
+    <style>
+        :root {
+            --bg: #0c0c0f;
+            --surface: #141418;
+            --surface-2: #1c1c22;
+            --border: rgba(255, 255, 255, 0.07);
+            --accent: #d4a44c;
+            --accent-dim: rgba(212, 164, 76, 0.12);
+            --accent-2: #b87333;
+            --green: #4e9b70;
+            --text: #edece8;
+            --muted: #7a7670;
+            --light: #b8b4ab;
+        }
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet"/>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    <!-- Styles / Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 5rem; /* offset for sticky header */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            line-height: 1.7;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(140px);
+            opacity: 0.09;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .blob-1 {
+            width: 550px;
+            height: 550px;
+            top: -80px;
+            left: -120px;
+            background: var(--accent);
+        }
+
+        .blob-2 {
+            width: 450px;
+            height: 450px;
+            bottom: 0;
+            right: -80px;
+            background: var(--green);
+        }
+
+        .wrap {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 0 1.75rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── NAV ── */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            backdrop-filter: blur(22px);
+            background: rgba(12, 12, 15, 0.82);
+            border-bottom: 1px solid var(--border);
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 4rem;
+            gap: 0.25rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.15rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 0.4rem 1rem;
+            border-radius: 7px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            letter-spacing: 0.2px;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-links a.active {
+            color: var(--accent);
+        }
+
+        /* ── SCROLL REVEAL ── */
+        .reveal,
+        .reveal-l,
+        .reveal-r {
+            opacity: 0;
+            transition: opacity 0.72s cubic-bezier(.22, 1, .36, 1), transform 0.72s cubic-bezier(.22, 1, .36, 1);
+        }
+
+        .reveal {
+            transform: translateY(28px);
+        }
+
+        .reveal-l {
+            transform: translateX(-32px);
+        }
+
+        .reveal-r {
+            transform: translateX(32px);
+        }
+
+        .reveal.vis,
+        .reveal-l.vis,
+        .reveal-r.vis {
+            opacity: 1;
+            transform: none;
+        }
+
+        .stagger>* {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity .6s cubic-bezier(.22, 1, .36, 1), transform .6s cubic-bezier(.22, 1, .36, 1);
+        }
+
+        .stagger.vis>*:nth-child(1) {
+            opacity: 1;
+            transform: none;
+            transition-delay: .04s;
+        }
+
+        .stagger.vis>*:nth-child(2) {
+            opacity: 1;
+            transform: none;
+            transition-delay: .11s;
+        }
+
+        .stagger.vis>*:nth-child(3) {
+            opacity: 1;
+            transform: none;
+            transition-delay: .18s;
+        }
+
+        .stagger.vis>*:nth-child(4) {
+            opacity: 1;
+            transform: none;
+            transition-delay: .25s;
+        }
+
+        .stagger.vis>*:nth-child(5) {
+            opacity: 1;
+            transform: none;
+            transition-delay: .32s;
+        }
+
+        .stagger.vis>*:nth-child(6) {
+            opacity: 1;
+            transform: none;
+            transition-delay: .39s;
+        }
+
+        /* ── HERO ── */
+        #about {
+            min-height: 82vh;
+            display: flex;
+            align-items: center;
+            padding: 3rem 0 4rem;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 0.75fr;
+            gap: 5rem;
+            align-items: start;
+        }
+
+        .hero-right-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            padding-top: 1rem;
+        }
+
+        .contrib-wrapper {
+            align-self: flex-end;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+        }
+
+        .eyebrow::before {
+            content: '';
+            width: 22px;
+            height: 2px;
+            background: var(--accent);
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.08;
+            letter-spacing: -1.5px;
+            margin-bottom: 1rem;
+        }
+
+        h1 .hi {
+            color: var(--light);
+            font-weight: 300;
+            font-size: 1.1rem;
+            display: block;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+            opacity: 0.7;
+        }
+
+        h1 .name {
+            color: var(--accent);
+            font-size: clamp(1.5rem, 2.8vw, 2.2rem);
+            display: block;
+            line-height: 1.1;
+        }
+
+        /* ── MATRIX CANVAS ── */
+        #matrix-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.025;
+        }
+
+        /* ── SECTION CODE COMMENT ── */
+        .sec-code-comment {
+            font-family: 'Courier New', monospace;
+            font-size: 0.72rem;
+            color: rgba(212, 164, 76, 0.35);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── CODE RAIN LINES (decorative) ── */
+        .code-rain-decor {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            font-family: 'Courier New', monospace;
+            font-size: 0.6rem;
+            color: rgba(212,164,76,0.06);
+            line-height: 1.4;
+            pointer-events: none;
+            user-select: none;
+            white-space: pre;
+            letter-spacing: 2px;
+        }
+
+        /* ── TERMINAL BADGE ── */
+        .terminal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.72rem;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.25rem 0.65rem;
+            color: var(--green);
+            margin-bottom: 1.2rem;
+        }
+        .terminal-badge::before {
+            content: '>';
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        /* ── SECTION DIVIDER RULE ── */
+        .code-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            opacity: 0.3;
+        }
+        .code-divider span {
+            font-family: 'Courier New', monospace;
+            font-size: 0.65rem;
+            color: var(--accent);
+            white-space: nowrap;
+        }
+        .code-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ── CURSOR GLOW ── */
+        .cursor-glow {
+            pointer-events: none;
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212,164,76,0.07) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            z-index: 9998;
+            transition: opacity 0.3s;
+        }
+
+        /* ── TILT CARD ── */
+        .tilt-card {
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+            will-change: transform;
+        }
+
+        /* ── RIPPLE ── */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(212, 164, 76, 0.25);
+            transform: scale(0);
+            animation: ripple-anim 0.6s linear;
+            pointer-events: none;
+        }
+        @keyframes ripple-anim {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        /* ── FLOATING CODE WIDGET ── */
+        .code-widget {
+            position: fixed;
+            right: 2rem;
+            bottom: 2rem;
+            z-index: 998;
+            width: 280px;
+            background: rgba(12,12,15,0.88);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 0.72rem;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .code-widget:hover {
+            border-color: rgba(212,164,76,0.25);
+            box-shadow: 0 14px 40px rgba(0,0,0,0.7), 0 0 15px rgba(212,164,76,0.08);
+        }
+        .cw-restore-btn {
+            position: fixed;
+            right: 2rem;
+            bottom: 2rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(20, 20, 24, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 997;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: scale(0.8);
+        }
+        .cw-restore-btn:hover {
+            border-color: var(--accent);
+            transform: scale(1.08) rotate(15deg);
+            color: var(--text);
+            box-shadow: 0 8px 24px rgba(212,164,76,0.18);
+        }
+        .cw-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid var(--border);
+        }
+        .cw-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            transition: transform 0.15s ease;
+        }
+        .cw-dot.r {
+            background: #ff5f57;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            color: rgba(0,0,0,0.7);
+            font-family: Arial, sans-serif;
+            font-weight: 800;
+        }
+        .cw-dot.r::before {
+            content: '×';
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            position: relative;
+            top: -0.5px;
+        }
+        .cw-bar:hover .cw-dot.r::before {
+            opacity: 1;
+        }
+        .cw-dot.y { background: #febc2e; }
+        .cw-dot.g { background: #28c840; }
+        .cw-filename {
+            margin-left: auto;
+            color: var(--muted);
+            font-size: 0.65rem;
+        }
+        .cw-body {
+            padding: 0.75rem;
+            line-height: 1.8;
+        }
+        .cw-line { display: flex; gap: 0.5rem; }
+        .cw-num { color: rgba(255,255,255,0.2); min-width: 1.2rem; text-align: right; }
+        .cw-kw  { color: #c084fc; }
+        .cw-fn  { color: #60a5fa; }
+        .cw-str { color: var(--accent); }
+        .cw-op  { color: var(--muted); }
+        .cw-var { color: #86efac; }
+        .cw-cursor {
+            display: inline-block;
+            width: 2px; height: 0.9em;
+            background: var(--accent);
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .hero-role {
+            font-size: 1.05rem;
+            color: var(--light);
+            font-weight: 400;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .hero-role::before {
+            content: '';
+            width: 26px;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .hero-bio {
+            color: var(--muted);
+            font-size: 0.98rem;
+            max-width: 88%;
+            margin-bottom: 2.25rem;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2.25rem;
+        }
+
+        .btn-cv {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.65rem 1.4rem;
+            background: var(--accent);
+            color: #0c0c0f;
+            border-radius: 9px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.22s;
+            letter-spacing: 0.2px;
+        }
+
+        .btn-cv:hover {
+            background: #e8b96a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(212, 164, 76, 0.3);
+        }
+
+        .btn-cv i {
+            font-size: 0.8rem;
+        }
+
+        .socials {
+            display: flex;
+            gap: 0.6rem;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .social-btn:hover {
+            color: var(--accent);
+            border-color: rgba(212, 164, 76, 0.35);
+            background: var(--accent-dim);
+            transform: translateY(-3px);
+        }
+
+        /* ── LANYARD (canvas physics) ── */
+        .lanyard-scene {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: grab;
+            user-select: none;
+            -webkit-user-select: none;
+            height: 490px;
+            touch-action: none;
+        }
+        .lanyard-scene:active { cursor: grabbing; }
+
+        /* pin at very top */
+        .pin {
+            position: relative;
+            z-index: 5;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #bbb, #555);
+            border: 3px solid #333;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.6), 0 1px 3px rgba(255,255,255,0.12) inset;
+            flex-shrink: 0;
+        }
+
+        /* canvas draws the rope */
+        #lanyard-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        /* card wrapper — absolutely positioned by JS */
+        #lanyard-swing {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform-origin: top center;
+            will-change: transform;
+        }
+
+        .cord { display: none; }
+        #lanyard-rope-svg { display: none; }
+
+        .id-card {
+            width: 210px;
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 20px 55px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+        }
+
+        .id-top {
+            height: 9px;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%);
+        }
+
+        .id-hole-row {
+            display: flex;
+            justify-content: center;
+            margin-top: -5px;
+        }
+
+        .id-hole {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--bg);
+            border: 2px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .id-body {
+            padding: 1.1rem 1.1rem 1.4rem;
+            text-align: center;
+        }
+
+        .id-photo {
+            width: 110px;
+            height: 110px;
+            border-radius: 11px;
+            object-fit: cover;
+            background: var(--surface-2);
+            display: block;
+            margin: 0.5rem auto 0.9rem;
+        }
+
+        .id-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 0.2rem;
+            line-height: 1.25;
+        }
+
+        .id-role {
+            font-size: 0.67rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 0.9rem;
+        }
+
+        .id-divider {
+            border: none;
+            border-top: 1px dashed rgba(255, 255, 255, 0.08);
+            margin: 0 0 0.75rem;
+        }
+
+        .id-barcode {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .id-barcode span {
+            display: block;
+            height: 24px;
+            background: var(--muted);
+            border-radius: 1px;
+            opacity: 0.35;
+        }
+
+        /* ── SECTIONS ── */
+        section {
+            padding: 4.5rem 0;
+        }
+
+        .sec-kicker {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2.2px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.55rem;
+        }
+
+        .sec-kicker::before {
+            content: '';
+            width: 14px;
+            height: 2px;
+            background: var(--accent);
+        }
+
+        .sec-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(1.6rem, 5.5vw, 2.4rem);
+            font-weight: 800;
+            letter-spacing: -0.4px;
+            margin-bottom: 0.65rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .sec-sub {
+            color: var(--muted);
+            font-size: 0.94rem;
+            max-width: 500px;
+            margin-bottom: 3.5rem;
+        }
+
+        /* ── CARD ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            padding: 1.75rem;
+            transition: border-color .22s, transform .28s, box-shadow .28s;
+        }
+
+        .card:hover {
+            border-color: rgba(212, 164, 76, 0.18);
+            transform: translateY(-5px);
+            box-shadow: 0 18px 38px rgba(0, 0, 0, 0.35);
+        }
+
+        /* ── SKILLS ── */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 1.6rem;
+        }
+
+        .sg-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 1.35rem;
+            padding-bottom: 0.55rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .skill {
+            margin-bottom: 1rem;
+        }
+
+        .skill-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.86rem;
+            font-weight: 500;
+            margin-bottom: 0.38rem;
+        }
+
+        .skill-pct {
+            color: var(--muted);
+            font-weight: 400;
+        }
+
+        .skill-track {
+            height: 4px;
+            background: var(--surface-2);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .skill-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            border-radius: 99px;
+            width: 0;
+            transition: width 1.1s cubic-bezier(.22, 1, .36, 1);
+        }
+
+        /* ── TIMELINE ── */
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+        }
+
+        .tl-head {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 2.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding-bottom: 0.65rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tl-head i {
+            color: var(--accent);
+            font-size: 1rem;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 1.85rem;
+            border-left: 1px solid var(--border);
+            margin-left: 0.4rem;
+        }
+
+        .tl-item {
+            position: relative;
+            margin-bottom: 2.5rem;
+        }
+
+        .tl-item::before {
+            content: '';
+            position: absolute;
+            left: calc(-1.85rem - 5px);
+            top: 0.4rem;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 0 3px rgba(212, 164, 76, 0.14);
+            transition: box-shadow .22s;
+        }
+
+        .tl-item:hover::before {
+            box-shadow: 0 0 0 6px rgba(212, 164, 76, 0.18);
+        }
+
+        .tl-date {
+            font-size: 0.73rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            margin-bottom: .28rem;
+        }
+
+        .tl-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: .22rem;
+        }
+
+        .tl-sub {
+            font-size: .85rem;
+            color: var(--light);
+            font-weight: 500;
+            margin-bottom: .7rem;
+        }
+
+        .tl-desc {
+            font-size: .88rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        /* ── PROJECTS ── */
+        .proj-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.6rem;
+        }
+
+        .proj-card {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 0;
+        }
+
+        .proj-thumb {
+            aspect-ratio: 16/9;
+            overflow: hidden;
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .proj-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform .5s ease;
+        }
+
+        .proj-card:hover .proj-thumb img {
+            transform: scale(1.06);
+        }
+
+        .proj-thumb .no-img {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .proj-thumb .no-img::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--proj-grad);
+            opacity: 0.85;
+        }
+
+        .proj-thumb .no-img i {
+            font-size: 2rem;
+            color: rgba(255,255,255,0.1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .proj-thumb .no-img .proj-thumb-icon {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .proj-thumb .no-img .proj-thumb-initial {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: rgba(255,255,255,0.15);
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+
+        .proj-body {
+            padding: 1.6rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .proj-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: .55rem;
+            transition: color .22s;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .proj-card:hover .proj-title {
+            color: var(--accent);
+        }
+
+        .proj-desc {
+            font-size: .88rem;
+            color: var(--muted);
+            margin-bottom: 1.35rem;
+            flex: 1;
+            line-height: 1.55;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .38rem;
+            margin-bottom: 1.35rem;
+        }
+
+        .tag {
+            font-size: .71rem;
+            font-weight: 600;
+            padding: .18rem .6rem;
+            border-radius: 99px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid rgba(212, 164, 76, 0.16);
+        }
+
+        /* ── API TAG (red) ── */
+        .tag-api {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.22);
+        }
+        .tag-api i {
+            font-size: .65rem;
+            margin-right: 2px;
+        }
+
+        .proj-link {
+            display: inline-flex;
+            align-items: center;
+            gap: .38rem;
+            font-size: .83rem;
+            font-weight: 600;
+            color: var(--light);
+            text-decoration: none;
+            transition: color .2s;
+        }
+
+        .proj-link i {
+            font-size: .73rem;
+            transition: transform .2s;
+        }
+
+        .proj-link:hover {
+            color: var(--accent);
+        }
+
+        .proj-link:hover i {
+            transform: translate(2px, -2px);
+        }
+
+        /* ── ORGS ── */
+        .org-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.6rem;
+        }
+
+        .org-card {
+            border-top: 2px solid var(--green);
+        }
+
+        /* ── EMPTY ── */
+        .empty {
+            grid-column: 1/-1;
+            text-align: center;
+            color: var(--muted);
+            padding: 3.5rem 0;
+            font-size: .88rem;
+        }
+
+        .empty i {
+            font-size: 1.75rem;
+            margin-bottom: .55rem;
+            display: block;
+            opacity: .2;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 2rem 0;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.8rem;
+            margin-top: 5rem;
+            letter-spacing: 0.3px;
+        }
+
+        /* scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #222226;
+            border-radius: 3px;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media(max-width:900px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+                gap: 3.5rem;
+                text-align: center;
+            }
+
+            .lanyard-scene {
+                order: -1;
+            }
+
+            .hero-right-col {
+                align-items: center;
+                padding-top: 1.5rem;
+            }
+
+            .tech-stack-row {
+                justify-content: center;
+            }
+
+            .contrib-wrapper {
+                align-self: center;
+                margin-top: 1.5rem;
+                max-width: 100%;
+                overflow-x: auto;
+                padding-bottom: 0.5rem;
+                scrollbar-width: none;
+            }
+            .contrib-wrapper::-webkit-scrollbar {
+                display: none;
+            }
+
+            .socials,
+            .hero-actions {
+                justify-content: center;
+            }
+
+            .hero-bio {
+                max-width: 100%;
+            }
+
+            .timeline-grid {
+                grid-template-columns: 1fr;
+                gap: 3.5rem;
+            }
+
+            .proj-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+            .skills-grid {
+                grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            }
+            .org-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+
+            h1 {
+                font-size: 3.25rem;
+            }
+
+            /* Code Widget floats cleanly above the centered lofi player on mobile/tablet */
+            .code-widget {
+                right: 1rem !important;
+                bottom: 4.8rem !important;
+                width: calc(100% - 2rem) !important;
+                max-width: 300px !important;
+                z-index: 998;
+            }
+            .cw-restore-btn {
+                right: 1rem !important;
+                bottom: 4.8rem !important;
+            }
+
+            /* Make the lofi-player much more compact on mobile/tablet by hiding volume and reducing padding */
+            .lofi-player {
+                bottom: 1rem;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                width: auto !important;
+                max-width: fit-content !important;
+                padding: 0.3rem 0.75rem 0.3rem 0.3rem !important;
+                gap: 0.5rem !important;
+                border-radius: 99px !important;
+            }
+            .lofi-player:hover {
+                transform: translateX(-50%) scale(1.02) !important;
+            }
+            .lp-controls {
+                display: none !important; /* hide volume controls on mobile */
+            }
+
+            /* Add safe space to footer so copyright text can be scrolled completely above floating widgets */
+            footer {
+                padding-bottom: 9.5rem !important;
+            }
+        }
+
+        @media(max-width:768px) {
+            header .wrap {
+                padding: 0;
+                position: relative;
+            }
+            header .wrap::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: 0;
+                height: 100%;
+                width: 40px;
+                background: linear-gradient(to right, transparent, rgba(12, 12, 15, 0.95));
+                pointer-events: none;
+                z-index: 10;
+            }
+            header .wrap::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: 40px;
+                background: linear-gradient(to left, transparent, rgba(12, 12, 15, 0.95));
+                pointer-events: none;
+                z-index: 10;
+            }
+            nav {
+                justify-content: flex-start;
+                overflow-x: auto;
+                scrollbar-width: none; /* Firefox */
+                -ms-overflow-style: none;  /* IE and Edge */
+                padding: 0 2rem;
+            }
+            nav::-webkit-scrollbar {
+                display: none; /* Chrome, Safari, Opera */
+            }
+            .nav-links {
+                flex-wrap: nowrap;
+                gap: 0.2rem;
+                margin: 0;
+                padding: 0;
+            }
+            .nav-links a {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media(max-width:560px) {
+            h1 {
+                font-size: 2.5rem;
+                letter-spacing: -1.2px;
+            }
+
+            section {
+                padding: 3.5rem 0;
+            }
+
+            .proj-grid,
+            .skills-grid,
+            .org-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1.2rem;
+            }
+
+            .card {
+                padding: 1.25rem;
+            }
+        }
+
+        /* ── LOFI PLAYER ── */
+        .lofi-player {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            z-index: 999;
+            background: rgba(20, 20, 24, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 0.5rem 1rem 0.5rem 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        .lofi-player:hover {
+            border-color: rgba(212, 164, 76, 0.3);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 15px rgba(212, 164, 76, 0.1);
+        }
+
+        .lp-disc-wrapper {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lp-disc {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #111;
+            border: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s;
+            animation: spin 6s linear infinite;
+            animation-play-state: paused;
+            cursor: pointer;
+        }
+
+        .lp-disc-inner {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--bg);
+            border: 1px solid var(--accent-dim);
+        }
+
+        .lofi-player.playing .lp-disc {
+            animation-play-state: running;
+        }
+
+        .lp-play-btn {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            border: none;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .lp-disc-wrapper:hover .lp-play-btn,
+        .lp-play-btn:focus {
+            opacity: 1;
+        }
+
+        .lp-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+            max-width: 140px;
+        }
+
+        .lp-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .lp-artist {
+            font-size: 0.62rem;
+            color: var(--accent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 0.1rem;
+        }
+
+        .lp-status {
+            font-size: 0.65rem;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .lp-visualizer {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 12px;
+            width: 20px;
+        }
+
+        .lp-bar {
+            width: 3px;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 1px;
+            transition: height 0.15s ease;
+        }
+
+        .lofi-player.playing .lp-bar {
+            animation: bounce 0.8s ease infinite alternate;
+        }
+
+        .lofi-player.playing .lp-bar:nth-child(2) {
+            animation-delay: 0.15s;
+            animation-duration: 0.6s;
+        }
+        .lofi-player.playing .lp-bar:nth-child(3) {
+            animation-delay: 0.3s;
+            animation-duration: 0.9s;
+        }
+        .lofi-player.playing .lp-bar:nth-child(4) {
+            animation-delay: 0.45s;
+            animation-duration: 0.7s;
+        }
+
+        .lp-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            border-left: 1px solid var(--border);
+            padding-left: 0.75rem;
+            margin-left: 0.25rem;
+        }
+
+        .lp-nav-btn {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 0.75rem;
+            padding: 0.2rem;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .lp-nav-btn:hover {
+            color: var(--accent);
+        }
+
+        .lp-volume-btn {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .lp-volume-btn:hover {
+            color: var(--text);
+        }
+
+        .lp-volume-slider {
+            width: 0;
+            opacity: 0;
+            height: 4px;
+            -webkit-appearance: none;
+            background: var(--surface-2);
+            border-radius: 99px;
+            outline: none;
+            transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s;
+            cursor: pointer;
+        }
+
+        .lp-volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .lp-volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+        }
+
+        .lp-controls:hover .lp-volume-slider,
+        .lp-volume-slider:active,
+        .lp-volume-slider:focus {
+            width: 60px;
+            opacity: 1;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes bounce {
+            0% { height: 3px; }
+            100% { height: 12px; }
+        }
+
+        @media(max-width: 560px) {
+            .lofi-player {
+                bottom: 1rem;
+                left: 1rem;
+            }
+        }
+
+        /* ── SECTION SPACING OVERRIDES ── */
+        #projects {
+            padding-bottom: 1rem;
+        }
+        #organizations {
+            padding-top: 1rem;
+        }
+
+        /* ── FLOATING COMMIT BADGE ── */
+        .commit-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.68rem;
+            background: rgba(30,30,38,0.8);
+            border: 1px solid rgba(212,164,76,0.18);
+            border-radius: 6px;
+            padding: 0.2rem 0.6rem;
+            color: var(--muted);
+            margin-bottom: 0.6rem;
+        }
+        .commit-badge .cb-hash { color: var(--accent); }
+        .commit-badge .cb-msg  { color: var(--light); }
+
+        /* ── DECORATIVE INLINE CODE ── */
+        .inline-code-decor {
+            display: inline-block;
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.1rem 0.4rem;
+            color: #c084fc;
+            vertical-align: middle;
+            margin-left: 0.4rem;
+        }
+
+        /* ── FLOATING GIT LOG PANEL ── */
+        .git-log-panel {
+            position: absolute;
+            left: -170px;
+            top: 30px;
+            width: 160px;
+            background: rgba(12,12,15,0.9);
+            border: 1px solid rgba(212,164,76,0.12);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.6rem;
+            padding: 0.5rem 0.6rem;
+            line-height: 1.8;
+            pointer-events: none;
+            color: var(--muted);
+            backdrop-filter: blur(8px);
+            display: none;
+        }
+        @media(min-width: 1200px) { .git-log-panel { display: block; } }
+        .glp-hash { color: #facc15; }
+        .glp-ok   { color: #4ade80; }
+        .glp-warn { color: var(--accent); }
+
+        /* ── TECH STACK PILLS ── */
+        .tech-stack-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 1.4rem;
+            margin-bottom: 0.7rem;
+        }
+        .tech-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.28rem;
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 0.22rem 0.65rem;
+            border-radius: 99px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--muted);
+            transition: all 0.18s;
+            letter-spacing: 0.2px;
+        }
+        .tech-pill i { font-size: 0.72rem; }
+        .tech-pill:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(212,164,76,0.25);
+            color: var(--text);
+            transform: translateY(-1px);
+        }
+        .tp-php    { color: #9b9fe8; }
+        .tp-js     { color: #f0d04e; }
+        .tp-react  { color: #61dafb; }
+        .tp-docker { color: #4a9edd; }
+        .tp-git    { color: #f34f29; }
+        .tp-db     { color: #4f9edb; }
+        .tp-linux  { color: #ccc; }
+        .tp-github { color: #e0e0e0; }
+
+        /* ── GIT STATUS BAR ── */
+        .git-status-bar {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.66rem;
+            color: var(--muted);
+            background: rgba(0,0,0,0.28);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.28rem 0.7rem;
+            margin-bottom: 1rem;
+        }
+        .gsb-branch { color: #c084fc; font-weight: 600; }
+        .gsb-branch i { margin-right: 0.15rem; }
+        .gsb-sep { opacity: 0.25; }
+        .gsb-ok { color: #4ade80; }
+        .gsb-ok i { margin-right: 0.15rem; }
+
+        /* ── CONTRIBUTION GRAPH ── */
+        .contrib-wrapper {
+            margin-top: 1.1rem;
+        }
+        .contrib-label {
+            font-family: 'Courier New', monospace;
+            font-size: 0.6rem;
+            color: rgba(212,164,76,0.3);
+            margin-bottom: 0.45rem;
+            letter-spacing: 0.5px;
+        }
+        .contrib-graph {
+            display: flex;
+            gap: 3px;
+        }
+        .contrib-col {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .contrib-cell {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.04);
+            transition: background 0.1s;
+        }
+        .contrib-cell:hover { background: rgba(212,164,76,0.5) !important; }
+        .contrib-cell.l1 { background: rgba(0,109,50,0.5); }
+        .contrib-cell.l2 { background: rgba(0,109,50,0.75); }
+        .contrib-cell.l3 { background: rgba(38,166,65,0.85); }
+        .contrib-cell.l4 { background: #39d353; }
+
+        /* ── DEPS PANEL (package.json / composer.json) ── */
+        .deps-panel {
+            float: right;
+            width: 195px;
+            margin: 0 0 1.2rem 1.5rem;
+            background: rgba(10,10,14,0.9);
+            border: 1px solid rgba(212,164,76,0.14);
+            border-radius: 10px;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            font-size: 0.63rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            display: none;
+        }
+        @media(min-width: 1100px) { .deps-panel { display: block; } }
+        .dp-header {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 10px;
+            background: rgba(255,255,255,0.025);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .dp-dot { width: 9px; height: 9px; border-radius: 50%; }
+        .dp-dot.r { background: #ff5f57; }
+        .dp-dot.y { background: #febc2e; }
+        .dp-dot.g { background: #28c840; }
+        .dp-title { margin-left: auto; color: rgba(255,255,255,0.22); font-size: 0.6rem; }
+        .dp-body { padding: 0.55rem 0.7rem; line-height: 1.9; }
+        .dp-row { display: flex; justify-content: space-between; gap: 0.3rem; }
+        .dp-key { color: #d4a44c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
+        .dp-val { color: #86efac; white-space: nowrap; }
+        .dp-obj { color: rgba(255,255,255,0.2); }
+
+
+        /* ═══════════════════════════════════════════
+           LOADING SCREEN
+        ══════════════════════════════════════════ */
+        #page-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: #0a0a0d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+                        visibility 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #page-loader.loader-hide {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Matrix canvas inside loader */
+        #loader-matrix {
+            position: absolute;
+            inset: 0;
+            opacity: 0.07;
+            pointer-events: none;
+        }
+
+        /* Scan line */
+        .loader-scan {
+            position: absolute;
+            left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(212,164,76,0.5) 30%,
+                rgba(212,164,76,0.9) 50%,
+                rgba(212,164,76,0.5) 70%,
+                transparent 100%);
+            animation: loaderScan 3s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes loaderScan {
+            0%   { top: -2px; opacity: 0; }
+            5%   { opacity: 1; }
+            95%  { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* Logo */
+        .loader-logo {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 2.5rem;
+            position: relative;
+            z-index: 1;
+            letter-spacing: -1px;
+            animation: logoPulse 2s ease-in-out infinite;
+        }
+        .loader-logo .lb { color: rgba(255,255,255,0.18); font-weight: 300; }
+        @keyframes logoPulse {
+            0%, 100% { text-shadow: 0 0 20px rgba(212,164,76,0.3); }
+            50%       { text-shadow: 0 0 40px rgba(212,164,76,0.6), 0 0 80px rgba(212,164,76,0.2); }
+        }
+
+        /* Terminal window */
+        .loader-terminal {
+            position: relative;
+            z-index: 1;
+            width: min(540px, 90vw);
+            background: rgba(14,14,18,0.96);
+            border: 1px solid rgba(212,164,76,0.2);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow:
+                0 30px 80px rgba(0,0,0,0.85),
+                0 0 0 1px rgba(255,255,255,0.03),
+                0 0 60px rgba(212,164,76,0.04) inset;
+        }
+
+        .lt-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.025);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .lt-dot { width: 11px; height: 11px; border-radius: 50%; }
+        .lt-dot.r { background: #ff5f57; }
+        .lt-dot.y { background: #febc2e; }
+        .lt-dot.g { background: #28c840; }
+        .lt-bar-title {
+            margin: 0 auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.68rem;
+            color: rgba(255,255,255,0.25);
+            letter-spacing: 0.5px;
+        }
+
+        .lt-body {
+            padding: 1.25rem 1.5rem 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.9;
+        }
+
+        .lt-row {
+            display: flex;
+            gap: 0.6rem;
+            opacity: 0;
+            transform: translateX(-8px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+        .lt-row.lt-show {
+            opacity: 1;
+            transform: none;
+        }
+        .lt-prompt  { color: var(--accent); user-select: none; }
+        .lt-cmd     { color: #86efac; }
+        .lt-grey    { color: rgba(255,255,255,0.22); }
+        .lt-out     { color: var(--muted); padding-left: 1.1rem; }
+        .lt-ok      { color: #4ade80; }
+        .lt-warn    { color: var(--accent); }
+
+        /* Progress */
+        .lt-progress-wrap {
+            margin-top: 1.1rem;
+            position: relative;
+            padding-bottom: 0.1rem;
+        }
+        .lt-pct {
+            position: absolute;
+            right: 0;
+            top: -1.4rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.68rem;
+            color: var(--accent);
+            transition: 0.4s;
+        }
+        .lt-track {
+            height: 4px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .lt-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #b87333, #d4a44c, #f0c060);
+            border-radius: 99px;
+            box-shadow: 0 0 12px rgba(212,164,76,0.55);
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Status text below terminal */
+        .loader-bottom {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            margin-top: 2rem;
+        }
+        .loader-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 0.3px;
+        }
+        .loader-sub {
+            font-family: 'Courier New', monospace;
+            font-size: 0.73rem;
+            color: var(--muted);
+            margin-top: 0.35rem;
+        }
+        .loader-dots span {
+            display: inline-block;
+            animation: dotBounce 1.2s ease-in-out infinite;
+        }
+        .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dotBounce {
+            0%, 80%, 100% { opacity: 0.2; transform: translateY(0); }
+            40%            { opacity: 1;   transform: translateY(-3px); }
+        }
+    </style>
 </head>
-<body
-    class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] flex p-6 lg:p-8 items-center lg:justify-center min-h-screen flex-col">
-<header class="w-full lg:max-w-4xl max-w-[335px] text-sm mb-6 not-has-[nav]:hidden">
-    @if (Route::has('filament.admin.auth.login'))
-        <nav class="flex items-center justify-end gap-4">
-            @auth
-                <a
-                    href="{{ route('filament.admin.pages.dashboard') }}"
-                    class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] border-[#19140035] hover:border-[#1915014a] border text-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#62605b] rounded-sm text-sm leading-normal"
-                >
-                    Dashboard
-                </a>
-            @else
-                <a
-                    href="{{ route('filament.admin.auth.login') }}"
-                    class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] text-[#1b1b18] border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm text-sm leading-normal"
-                >
-                    Log in
-                </a>
 
-                @if (Route::has('filament.auth.register'))
-                    <a
-                        href="{{ route('filament.auth.register') }}"
-                        class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] border-[#19140035] hover:border-[#1915014a] border text-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#62605b] rounded-sm text-sm leading-normal">
-                        Register
-                    </a>
-                @endif
-            @endauth
-        </nav>
-    @endif
-</header>
-<div
-    class="flex items-center justify-center w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0">
-    <main class="flex max-w-[335px] w-full flex-col-reverse lg:max-w-4xl lg:flex-row">
-        <div
-            class="text-[13px] leading-[20px] flex-1 p-6 pb-12 lg:p-20 bg-white dark:bg-[#161615] dark:text-[#EDEDEC] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] rounded-bl-lg rounded-br-lg lg:rounded-tl-lg lg:rounded-br-none">
-            <h1 class="mb-1 font-medium">Let's get started</h1>
-            <p class="mb-2 text-[#706f6c] dark:text-[#A1A09A]">Laravel has an incredibly rich ecosystem. <br>We suggest
-                starting with the following.</p>
-            <ul class="flex flex-col mb-4 lg:mb-6">
-                <li class="flex items-center gap-4 py-2 relative before:border-l before:border-[#e3e3e0] dark:before:border-[#3E3E3A] before:top-1/2 before:bottom-0 before:left-[0.4rem] before:absolute">
-                            <span class="relative py-1 bg-white dark:bg-[#161615]">
-                                <span
-                                    class="flex items-center justify-center rounded-full bg-[#FDFDFC] dark:bg-[#161615] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.06)] w-3.5 h-3.5 border dark:border-[#3E3E3A] border-[#e3e3e0]">
-                                    <span class="rounded-full bg-[#dbdbd7] dark:bg-[#3E3E3A] w-1.5 h-1.5"></span>
-                                </span>
-                            </span>
-                    <span>
-                                Read the
-                                <a href="https://laravel.com/docs" target="_blank"
-                                   class="inline-flex items-center space-x-1 font-medium underline underline-offset-4 text-[#f53003] dark:text-[#FF4433] ml-1">
-                                    <span>Documentation</span>
-                                    <svg
-                                        width="10"
-                                        height="11"
-                                        viewBox="0 0 10 11"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="w-2.5 h-2.5"
-                                    >
-                                        <path
-                                            d="M7.70833 6.95834V2.79167H3.54167M2.5 8L7.5 3.00001"
-                                            stroke="currentColor"
-                                            stroke-linecap="square"
-                                        />
-                                    </svg>
-                                </a>
-                            </span>
-                </li>
-                <li class="flex items-center gap-4 py-2 relative before:border-l before:border-[#e3e3e0] dark:before:border-[#3E3E3A] before:bottom-1/2 before:top-0 before:left-[0.4rem] before:absolute">
-                            <span class="relative py-1 bg-white dark:bg-[#161615]">
-                                <span
-                                    class="flex items-center justify-center rounded-full bg-[#FDFDFC] dark:bg-[#161615] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.06)] w-3.5 h-3.5 border dark:border-[#3E3E3A] border-[#e3e3e0]">
-                                    <span class="rounded-full bg-[#dbdbd7] dark:bg-[#3E3E3A] w-1.5 h-1.5"></span>
-                                </span>
-                            </span>
-                    <span>
-                                Watch video tutorials at
-                                <a href="https://laracasts.com" target="_blank"
-                                   class="inline-flex items-center space-x-1 font-medium underline underline-offset-4 text-[#f53003] dark:text-[#FF4433] ml-1">
-                                    <span>Laracasts</span>
-                                    <svg
-                                        width="10"
-                                        height="11"
-                                        viewBox="0 0 10 11"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="w-2.5 h-2.5"
-                                    >
-                                        <path
-                                            d="M7.70833 6.95834V2.79167H3.54167M2.5 8L7.5 3.00001"
-                                            stroke="currentColor"
-                                            stroke-linecap="square"
-                                        />
-                                    </svg>
-                                </a>
-                            </span>
-                </li>
-            </ul>
-            <ul class="flex gap-3 text-sm leading-normal">
-                <li>
-                    <a href="https://cloud.laravel.com" target="_blank"
-                       class="inline-block dark:bg-[#eeeeec] dark:border-[#eeeeec] dark:text-[#1C1C1A] dark:hover:bg-white dark:hover:border-white hover:bg-black hover:border-black px-5 py-1.5 bg-[#1b1b18] rounded-sm border border-black text-white text-sm leading-normal">
-                        Deploy now
-                    </a>
-                </li>
-            </ul>
+<body>
+
+    <!-- ═══════════ LOADING SCREEN ═══════════ -->
+    <div id="page-loader">
+        <canvas id="loader-matrix"></canvas>
+        <div class="loader-scan"></div>
+
+        <div class="loader-logo">
+            <span class="lb">&lt;</span>ERL<span class="lb">/&gt;</span>
         </div>
-        <div
-            class="bg-[#fff2f2] dark:bg-[#1D0002] relative lg:-ml-px -mb-px lg:mb-0 rounded-t-lg lg:rounded-t-none lg:rounded-r-lg aspect-[335/376] lg:aspect-auto w-full lg:w-[438px] shrink-0 overflow-hidden">
-            {{-- Laravel Logo --}}
-            <svg
-                class="w-full text-[#F53003] dark:text-[#F61500] transition-all translate-y-0 opacity-100 max-w-none duration-750 starting:opacity-0 starting:translate-y-6"
-                viewBox="0 0 438 104" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17.2036 -3H0V102.197H49.5189V86.7187H17.2036V-3Z" fill="currentColor"/>
-                <path
-                    d="M110.256 41.6337C108.061 38.1275 104.945 35.3731 100.905 33.3681C96.8667 31.3647 92.8016 30.3618 88.7131 30.3618C83.4247 30.3618 78.5885 31.3389 74.201 33.2923C69.8111 35.2456 66.0474 37.928 62.9059 41.3333C59.7643 44.7401 57.3198 48.6726 55.5754 53.1293C53.8287 57.589 52.9572 62.274 52.9572 67.1813C52.9572 72.1925 53.8287 76.8995 55.5754 81.3069C57.3191 85.7173 59.7636 89.6241 62.9059 93.0293C66.0474 96.4361 69.8119 99.1155 74.201 101.069C78.5885 103.022 83.4247 103.999 88.7131 103.999C92.8016 103.999 96.8667 102.997 100.905 100.994C104.945 98.9911 108.061 96.2359 110.256 92.7282V102.195H126.563V32.1642H110.256V41.6337ZM108.76 75.7472C107.762 78.4531 106.366 80.8078 104.572 82.8112C102.776 84.8161 100.606 86.4183 98.0637 87.6206C95.5202 88.823 92.7004 89.4238 89.6103 89.4238C86.5178 89.4238 83.7252 88.823 81.2324 87.6206C78.7388 86.4183 76.5949 84.8161 74.7998 82.8112C73.004 80.8078 71.6319 78.4531 70.6856 75.7472C69.7356 73.0421 69.2644 70.1868 69.2644 67.1821C69.2644 64.1758 69.7356 61.3205 70.6856 58.6154C71.6319 55.9102 73.004 53.5571 74.7998 51.5522C76.5949 49.5495 78.738 47.9451 81.2324 46.7427C83.7252 45.5404 86.5178 44.9396 89.6103 44.9396C92.7012 44.9396 95.5202 45.5404 98.0637 46.7427C100.606 47.9451 102.776 49.5487 104.572 51.5522C106.367 53.5571 107.762 55.9102 108.76 58.6154C109.756 61.3205 110.256 64.1758 110.256 67.1821C110.256 70.1868 109.756 73.0421 108.76 75.7472Z"
-                    fill="currentColor"/>
-                <path
-                    d="M242.805 41.6337C240.611 38.1275 237.494 35.3731 233.455 33.3681C229.416 31.3647 225.351 30.3618 221.262 30.3618C215.974 30.3618 211.138 31.3389 206.75 33.2923C202.36 35.2456 198.597 37.928 195.455 41.3333C192.314 44.7401 189.869 48.6726 188.125 53.1293C186.378 57.589 185.507 62.274 185.507 67.1813C185.507 72.1925 186.378 76.8995 188.125 81.3069C189.868 85.7173 192.313 89.6241 195.455 93.0293C198.597 96.4361 202.361 99.1155 206.75 101.069C211.138 103.022 215.974 103.999 221.262 103.999C225.351 103.999 229.416 102.997 233.455 100.994C237.494 98.9911 240.611 96.2359 242.805 92.7282V102.195H259.112V32.1642H242.805V41.6337ZM241.31 75.7472C240.312 78.4531 238.916 80.8078 237.122 82.8112C235.326 84.8161 233.156 86.4183 230.614 87.6206C228.07 88.823 225.251 89.4238 222.16 89.4238C219.068 89.4238 216.275 88.823 213.782 87.6206C211.289 86.4183 209.145 84.8161 207.35 82.8112C205.554 80.8078 204.182 78.4531 203.236 75.7472C202.286 73.0421 201.814 70.1868 201.814 67.1821C201.814 64.1758 202.286 61.3205 203.236 58.6154C204.182 55.9102 205.554 53.5571 207.35 51.5522C209.145 49.5495 211.288 47.9451 213.782 46.7427C216.275 45.5404 219.068 44.9396 222.16 44.9396C225.251 44.9396 228.07 45.5404 230.614 46.7427C233.156 47.9451 235.326 49.5487 237.122 51.5522C238.917 53.5571 240.312 55.9102 241.31 58.6154C242.306 61.3205 242.806 64.1758 242.806 67.1821C242.805 70.1868 242.305 73.0421 241.31 75.7472Z"
-                    fill="currentColor"/>
-                <path d="M438 -3H421.694V102.197H438V-3Z" fill="currentColor"/>
-                <path d="M139.43 102.197H155.735V48.2834H183.712V32.1665H139.43V102.197Z" fill="currentColor"/>
-                <path
-                    d="M324.49 32.1665L303.995 85.794L283.498 32.1665H266.983L293.748 102.197H314.242L341.006 32.1665H324.49Z"
-                    fill="currentColor"/>
-                <path
-                    d="M376.571 30.3656C356.603 30.3656 340.797 46.8497 340.797 67.1828C340.797 89.6597 356.094 104 378.661 104C391.29 104 399.354 99.1488 409.206 88.5848L398.189 80.0226C398.183 80.031 389.874 90.9895 377.468 90.9895C363.048 90.9895 356.977 79.3111 356.977 73.269H411.075C413.917 50.1328 398.775 30.3656 376.571 30.3656ZM357.02 61.0967C357.145 59.7487 359.023 43.3761 376.442 43.3761C393.861 43.3761 395.978 59.7464 396.099 61.0967H357.02Z"
-                    fill="currentColor"/>
-            </svg>
 
-            {{-- Light Mode 12 SVG --}}
-            <svg class="w-[448px] max-w-none relative -mt-[4.9rem] -ml-8 lg:ml-0 lg:-mt-[6.6rem] dark:hidden"
-                 viewBox="0 0 440 376" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g class="transition-all delay-300 translate-y-0 opacity-100 duration-750 starting:opacity-0 starting:translate-y-4">
-                    <path
-                        d="M188.263 355.73L188.595 355.73C195.441 348.845 205.766 339.761 219.569 328.477C232.93 317.193 242.978 308.205 249.714 301.511C256.34 294.626 260.867 287.358 263.296 279.708C265.725 272.058 264.565 264.121 259.816 255.896C254.516 246.716 247.062 239.352 237.454 233.805C227.957 228.067 217.908 225.198 207.307 225.198C196.927 225.197 190.136 227.97 186.934 233.516C183.621 238.872 184.726 246.331 190.247 255.894L125.647 255.891C116.371 239.825 112.395 225.481 113.72 212.858C115.265 200.235 121.559 190.481 132.602 183.596C143.754 176.52 158.607 172.982 177.159 172.983C196.594 172.984 215.863 176.523 234.968 183.6C253.961 190.486 271.299 200.241 286.98 212.864C302.661 225.488 315.14 239.833 324.416 255.899C333.03 270.817 336.841 283.918 335.847 295.203C335.075 306.487 331.376 316.336 324.75 324.751C318.346 333.167 308.408 343.494 294.936 355.734L377.094 355.737L405.917 405.656L217.087 405.649L188.263 355.73Z"
-                        fill="black"/>
-                    <path
-                        d="M9.11884 226.339L-13.7396 226.338L-42.7286 176.132L43.0733 176.135L175.595 405.649L112.651 405.647L9.11884 226.339Z"
-                        fill="black"/>
-                    <path
-                        d="M188.263 355.73L188.595 355.73C195.441 348.845 205.766 339.761 219.569 328.477C232.93 317.193 242.978 308.205 249.714 301.511C256.34 294.626 260.867 287.358 263.296 279.708C265.725 272.058 264.565 264.121 259.816 255.896C254.516 246.716 247.062 239.352 237.454 233.805C227.957 228.067 217.908 225.198 207.307 225.198C196.927 225.197 190.136 227.97 186.934 233.516C183.621 238.872 184.726 246.331 190.247 255.894L125.647 255.891C116.371 239.825 112.395 225.481 113.72 212.858C115.265 200.235 121.559 190.481 132.602 183.596C143.754 176.52 158.607 172.982 177.159 172.983C196.594 172.984 215.863 176.523 234.968 183.6C253.961 190.486 271.299 200.241 286.98 212.864C302.661 225.488 315.14 239.833 324.416 255.899C333.03 270.817 336.841 283.918 335.847 295.203C335.075 306.487 331.376 316.336 324.75 324.751C318.346 333.167 308.408 343.494 294.936 355.734L377.094 355.737L405.917 405.656L217.087 405.649L188.263 355.73Z"
-                        stroke="#1B1B18" stroke-width="1"/>
-                    <path
-                        d="M9.11884 226.339L-13.7396 226.338L-42.7286 176.132L43.0733 176.135L175.595 405.649L112.651 405.647L9.11884 226.339Z"
-                        stroke="#1B1B18" stroke-width="1"/>
-                    <path
-                        d="M204.592 327.449L204.923 327.449C211.769 320.564 222.094 311.479 235.897 300.196C249.258 288.912 259.306 279.923 266.042 273.23C272.668 266.345 277.195 259.077 279.624 251.427C282.053 243.777 280.893 235.839 276.145 227.615C270.844 218.435 263.39 211.071 253.782 205.524C244.285 199.786 234.236 196.917 223.635 196.916C213.255 196.916 206.464 199.689 203.262 205.235C199.949 210.59 201.054 218.049 206.575 227.612L141.975 227.61C132.699 211.544 128.723 197.2 130.048 184.577C131.593 171.954 137.887 162.2 148.93 155.315C160.083 148.239 174.935 144.701 193.487 144.702C212.922 144.703 232.192 148.242 251.296 155.319C270.289 162.205 287.627 171.96 303.308 184.583C318.989 197.207 331.468 211.552 340.745 227.618C349.358 242.536 353.169 255.637 352.175 266.921C351.403 278.205 347.704 288.055 341.078 296.47C334.674 304.885 324.736 315.213 311.264 327.453L393.422 327.456L422.246 377.375L233.415 377.368L204.592 327.449Z"
-                        fill="#F8B803"/>
-                    <path
-                        d="M25.447 198.058L2.58852 198.057L-26.4005 147.851L59.4015 147.854L191.923 377.368L128.979 377.365L25.447 198.058Z"
-                        fill="#F8B803"/>
-                    <path
-                        d="M204.592 327.449L204.923 327.449C211.769 320.564 222.094 311.479 235.897 300.196C249.258 288.912 259.306 279.923 266.042 273.23C272.668 266.345 277.195 259.077 279.624 251.427C282.053 243.777 280.893 235.839 276.145 227.615C270.844 218.435 263.39 211.071 253.782 205.524C244.285 199.786 234.236 196.917 223.635 196.916C213.255 196.916 206.464 199.689 203.262 205.235C199.949 210.59 201.054 218.049 206.575 227.612L141.975 227.61C132.699 211.544 128.723 197.2 130.048 184.577C131.593 171.954 137.887 162.2 148.93 155.315C160.083 148.239 174.935 144.701 193.487 144.702C212.922 144.703 232.192 148.242 251.296 155.319C270.289 162.205 287.627 171.96 303.308 184.583C318.989 197.207 331.468 211.552 340.745 227.618C349.358 242.536 353.169 255.637 352.175 266.921C351.403 278.205 347.704 288.055 341.078 296.47C334.674 304.885 324.736 315.213 311.264 327.453L393.422 327.456L422.246 377.375L233.415 377.368L204.592 327.449Z"
-                        stroke="#1B1B18" stroke-width="1"/>
-                    <path
-                        d="M25.447 198.058L2.58852 198.057L-26.4005 147.851L59.4015 147.854L191.923 377.368L128.979 377.365L25.447 198.058Z"
-                        stroke="#1B1B18" stroke-width="1"/>
-                </g>
-                <g style="mix-blend-mode: hard-light"
-                   class="transition-all delay-300 translate-y-0 opacity-100 duration-750 starting:opacity-0 starting:translate-y-4">
-                    <path
-                        d="M217.342 305.363L217.673 305.363C224.519 298.478 234.844 289.393 248.647 278.11C262.008 266.826 272.056 257.837 278.792 251.144C285.418 244.259 289.945 236.991 292.374 229.341C294.803 221.691 293.643 213.753 288.895 205.529C283.594 196.349 276.14 188.985 266.532 183.438C257.035 177.7 246.986 174.831 236.385 174.83C226.005 174.83 219.214 177.603 216.012 183.149C212.699 188.504 213.804 195.963 219.325 205.527L154.725 205.524C145.449 189.458 141.473 175.114 142.798 162.491C144.343 149.868 150.637 140.114 161.68 133.229C172.833 126.153 187.685 122.615 206.237 122.616C225.672 122.617 244.942 126.156 264.046 133.233C283.039 140.119 300.377 149.874 316.058 162.497C331.739 175.121 344.218 189.466 353.495 205.532C362.108 220.45 365.919 233.551 364.925 244.835C364.153 256.12 360.454 265.969 353.828 274.384C347.424 282.799 337.486 293.127 324.014 305.367L406.172 305.37L434.996 355.289L246.165 355.282L217.342 305.363Z"
-                        fill="#F0ACB8"/>
-                    <path
-                        d="M38.197 175.972L15.3385 175.971L-13.6505 125.765L72.1515 125.768L204.673 355.282L141.729 355.279L38.197 175.972Z"
-                        fill="#F0ACB8"/>
-                    <path
-                        d="M217.342 305.363L217.673 305.363C224.519 298.478 234.844 289.393 248.647 278.11C262.008 266.826 272.056 257.837 278.792 251.144C285.418 244.259 289.945 236.991 292.374 229.341C294.803 221.691 293.643 213.753 288.895 205.529C283.594 196.349 276.14 188.985 266.532 183.438C257.035 177.7 246.986 174.831 236.385 174.83C226.005 174.83 219.214 177.603 216.012 183.149C212.699 188.504 213.804 195.963 219.325 205.527L154.725 205.524C145.449 189.458 141.473 175.114 142.798 162.491C144.343 149.868 150.637 140.114 161.68 133.229C172.833 126.153 187.685 122.615 206.237 122.616C225.672 122.617 244.942 126.156 264.046 133.233C283.039 140.119 300.377 149.874 316.058 162.497C331.739 175.121 344.218 189.466 353.495 205.532C362.108 220.45 365.919 233.551 364.925 244.835C364.153 256.12 360.454 265.969 353.828 274.384C347.424 282.799 337.486 293.127 324.014 305.367L406.172 305.37L434.996 355.289L246.165 355.282L217.342 305.363Z"
-                        stroke="#1B1B18" stroke-width="1"/>
-                    <path
-                        d="M38.197 175.972L15.3385 175.971L-13.6505 125.765L72.1515 125.768L204.673 355.282L141.729 355.279L38.197 175.972Z"
-                        stroke="#1B1B18" stroke-width="1"/>
-                </g>
-                <g style="mix-blend-mode: plus-darker"
-                   class="transition-all delay-300 translate-y-0 opacity-100 duration-750 starting:opacity-0 starting:translate-y-4">
-                    <path
-                        d="M230.951 281.792L231.282 281.793C238.128 274.907 248.453 265.823 262.256 254.539C275.617 243.256 285.666 234.267 292.402 227.573C299.027 220.688 303.554 213.421 305.983 205.771C308.412 198.12 307.253 190.183 302.504 181.959C297.203 172.778 289.749 165.415 280.142 159.868C270.645 154.13 260.596 151.26 249.995 151.26C239.615 151.26 232.823 154.033 229.621 159.579C226.309 164.934 227.413 172.393 232.935 181.956L168.335 181.954C159.058 165.888 155.082 151.543 156.407 138.92C157.953 126.298 164.247 116.544 175.289 109.659C186.442 102.583 201.294 99.045 219.846 99.0457C239.281 99.0464 258.551 102.585 277.655 109.663C296.649 116.549 313.986 126.303 329.667 138.927C345.349 151.551 357.827 165.895 367.104 181.961C375.718 196.88 379.528 209.981 378.535 221.265C377.762 232.549 374.063 242.399 367.438 250.814C361.033 259.229 351.095 269.557 337.624 281.796L419.782 281.8L448.605 331.719L259.774 331.712L230.951 281.792Z"
-                        fill="#F3BEC7"/>
-                    <path
-                        d="M51.8063 152.402L28.9479 152.401L-0.0411453 102.195L85.7608 102.198L218.282 331.711L155.339 331.709L51.8063 152.402Z"
-                        fill="#F3BEC7"/>
-                    <path
-                        d="M230.951 281.792L231.282 281.793C238.128 274.907 248.453 265.823 262.256 254.539C275.617 243.256 285.666 234.267 292.402 227.573C299.027 220.688 303.554 213.421 305.983 205.771C308.412 198.12 307.253 190.183 302.504 181.959C297.203 172.778 289.749 165.415 280.142 159.868C270.645 154.13 260.596 151.26 249.995 151.26C239.615 151.26 232.823 154.033 229.621 159.579C226.309 164.934 227.413 172.393 232.935 181.956L168.335 181.954C159.058 165.888 155.082 151.543 156.407 138.92C157.953 126.298 164.247 116.544 175.289 109.659C186.442 102.583 201.294 99.045 219.846 99.0457C239.281 99.0464 258.551 102.585 277.655 109.663C296.649 116.549 313.986 126.303 329.667 138.927C345.349 151.551 357.827 165.895 367.104 181.961C375.718 196.88 379.528 209.981 378.535 221.265C377.762 232.549 374.063 242.399 367.438 250.814C361.033 259.229 351.095 269.557 337.624 281.796L419.782 281.8L448.605 331.719L259.774 331.712L230.951 281.792Z"
-                        stroke="#1B1B18" stroke-width="1"/>
-                    <path
-                        d="M51.8063 152.402L28.9479 152.401L-0.0411453 102.195L85.7608 102.198L218.282 331.711L155.339 331.709L51.8063 152.402Z"
-                        stroke="#1B1B18" stroke-width="1"/>
-                </g>
-                <g class="transition-all delay-300 translate-y-0 opacity-100 duration-750 starting:opacity-0 starting:translate-y-4">
-                    <path
-                        d="M188.467 355.363L188.798 355.363C195.644 348.478 205.969 339.393 219.772 328.11C233.133 316.826 243.181 307.837 249.917 301.144C253.696 297.217 256.792 293.166 259.205 288.991C261.024 285.845 262.455 282.628 263.499 279.341C265.928 271.691 264.768 263.753 260.02 255.529C254.719 246.349 247.265 238.985 237.657 233.438C228.16 227.7 218.111 224.831 207.51 224.83C197.13 224.83 190.339 227.603 187.137 233.149C183.824 238.504 184.929 245.963 190.45 255.527L125.851 255.524C116.574 239.458 112.598 225.114 113.923 212.491C114.615 206.836 116.261 201.756 118.859 197.253C122.061 191.704 126.709 187.03 132.805 183.229C143.958 176.153 158.81 172.615 177.362 172.616C196.797 172.617 216.067 176.156 235.171 183.233C254.164 190.119 271.502 199.874 287.183 212.497C302.864 225.121 315.343 239.466 324.62 255.532C333.233 270.45 337.044 283.551 336.05 294.835C335.46 303.459 333.16 311.245 329.151 318.194C327.915 320.337 326.515 322.4 324.953 324.384C318.549 332.799 308.611 343.127 295.139 355.367L377.297 355.37L406.121 405.289L217.29 405.282L188.467 355.363Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M9.32197 225.972L-13.5365 225.971L-42.5255 175.765L43.2765 175.768L175.798 405.282L112.854 405.279L9.32197 225.972Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M345.247 111.915C329.566 99.2919 312.229 89.5371 293.235 82.6512L235.167 183.228C254.161 190.114 271.498 199.869 287.179 212.492L345.247 111.915Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M382.686 154.964C373.41 138.898 360.931 124.553 345.25 111.93L287.182 212.506C302.863 225.13 315.342 239.475 324.618 255.541L382.686 154.964Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M293.243 82.6472C274.139 75.57 254.869 72.031 235.434 72.0303L177.366 172.607C196.801 172.608 216.071 176.147 235.175 183.224L293.243 82.6472Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M394.118 194.257C395.112 182.973 391.301 169.872 382.688 154.953L324.619 255.53C333.233 270.448 337.044 283.55 336.05 294.834L394.118 194.257Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M235.432 72.0311C216.88 72.0304 202.027 75.5681 190.875 82.6442L132.806 183.221C143.959 176.145 158.812 172.607 177.363 172.608L235.432 72.0311Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M265.59 124.25C276.191 124.251 286.24 127.12 295.737 132.858L237.669 233.435C228.172 227.697 218.123 224.828 207.522 224.827L265.59 124.25Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M295.719 132.859C305.326 138.406 312.78 145.77 318.081 154.95L260.013 255.527C254.712 246.347 247.258 238.983 237.651 233.436L295.719 132.859Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M387.218 217.608C391.227 210.66 393.527 202.874 394.117 194.25L336.049 294.827C335.459 303.451 333.159 311.237 329.15 318.185L387.218 217.608Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M245.211 132.577C248.413 127.03 255.204 124.257 265.584 124.258L207.516 224.835C197.136 224.834 190.345 227.607 187.143 233.154L245.211 132.577Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M318.094 154.945C322.842 163.17 324.002 171.107 321.573 178.757L263.505 279.334C265.934 271.684 264.774 263.746 260.026 255.522L318.094 154.945Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M176.925 96.6737C180.127 91.1249 184.776 86.4503 190.871 82.6499L132.803 183.227C126.708 187.027 122.059 191.702 118.857 197.25L176.925 96.6737Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M387.226 217.606C385.989 219.749 384.59 221.813 383.028 223.797L324.96 324.373C326.522 322.39 327.921 320.326 329.157 318.183L387.226 217.606Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M317.269 188.408C319.087 185.262 320.519 182.045 321.562 178.758L263.494 279.335C262.451 282.622 261.019 285.839 259.201 288.985L317.269 188.408Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M245.208 132.573C241.895 137.928 243 145.387 248.522 154.95L190.454 255.527C184.932 245.964 183.827 238.505 187.14 233.15L245.208 132.573Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M176.93 96.6719C174.331 101.175 172.686 106.255 171.993 111.91L113.925 212.487C114.618 206.831 116.263 201.752 118.862 197.249L176.93 96.6719Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M317.266 188.413C314.853 192.589 311.757 196.64 307.978 200.566L249.91 301.143C253.689 297.216 256.785 293.166 259.198 288.99L317.266 188.413Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M464.198 304.708L435.375 254.789L377.307 355.366L406.13 405.285L464.198 304.708Z"
-                          stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M353.209 254.787C366.68 242.548 376.618 232.22 383.023 223.805L324.955 324.382C318.55 332.797 308.612 343.124 295.141 355.364L353.209 254.787Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M435.37 254.787L353.212 254.784L295.144 355.361L377.302 355.364L435.37 254.787Z"
-                          stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M183.921 154.947L248.521 154.95L190.453 255.527L125.853 255.524L183.921 154.947Z"
-                          stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M171.992 111.914C170.668 124.537 174.643 138.881 183.92 154.947L125.852 255.524C116.575 239.458 112.599 225.114 113.924 212.491L171.992 111.914Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M307.987 200.562C301.251 207.256 291.203 216.244 277.842 227.528L219.774 328.105C233.135 316.821 243.183 307.832 249.919 301.139L307.987 200.562Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M15.5469 75.1797L44.5359 125.386L-13.5321 225.963L-42.5212 175.756L15.5469 75.1797Z"
-                          stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M277.836 227.536C264.033 238.82 253.708 247.904 246.862 254.789L188.794 355.366C195.64 348.481 205.965 339.397 219.768 328.113L277.836 227.536Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M275.358 304.706L464.189 304.713L406.12 405.29L217.29 405.283L275.358 304.706Z"
-                          stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M44.5279 125.39L67.3864 125.39L9.31834 225.967L-13.5401 225.966L44.5279 125.39Z"
-                          stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M101.341 75.1911L233.863 304.705L175.795 405.282L43.2733 175.768L101.341 75.1911ZM15.5431 75.19L-42.525 175.767L43.277 175.77L101.345 75.1932L15.5431 75.19Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M246.866 254.784L246.534 254.784L188.466 355.361L188.798 355.361L246.866 254.784Z"
-                          stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M246.539 254.781L275.362 304.701L217.294 405.277L188.471 355.358L246.539 254.781Z"
-                          stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M67.3906 125.391L170.923 304.698L112.855 405.275L9.32257 225.967L67.3906 125.391Z"
-                          stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M170.921 304.699L233.865 304.701L175.797 405.278L112.853 405.276L170.921 304.699Z"
-                          stroke="#1B1B18" stroke-width="1" stroke-linejoin="bevel"/>
-                </g>
-                <g style="mix-blend-mode: hard-light"
-                   class="transition-all delay-300 translate-y-0 opacity-100 duration-750 starting:opacity-0 starting:translate-y-4">
-                    <path
-                        d="M246.544 254.79L246.875 254.79C253.722 247.905 264.046 238.82 277.849 227.537C291.21 216.253 301.259 207.264 307.995 200.57C314.62 193.685 319.147 186.418 321.577 178.768C324.006 171.117 322.846 163.18 318.097 154.956C312.796 145.775 305.342 138.412 295.735 132.865C286.238 127.127 276.189 124.258 265.588 124.257C255.208 124.257 248.416 127.03 245.214 132.576C241.902 137.931 243.006 145.39 248.528 154.953L183.928 154.951C174.652 138.885 170.676 124.541 172 111.918C173.546 99.2946 179.84 89.5408 190.882 82.6559C202.035 75.5798 216.887 72.0421 235.439 72.0428C254.874 72.0435 274.144 75.5825 293.248 82.6598C312.242 89.5457 329.579 99.3005 345.261 111.924C360.942 124.548 373.421 138.892 382.697 154.958C391.311 169.877 395.121 182.978 394.128 194.262C393.355 205.546 389.656 215.396 383.031 223.811C376.627 232.226 366.688 242.554 353.217 254.794L435.375 254.797L464.198 304.716L275.367 304.709L246.544 254.79Z"
-                        fill="#F0ACB8"/>
-                    <path
-                        d="M246.544 254.79L246.875 254.79C253.722 247.905 264.046 238.82 277.849 227.537C291.21 216.253 301.259 207.264 307.995 200.57C314.62 193.685 319.147 186.418 321.577 178.768C324.006 171.117 322.846 163.18 318.097 154.956C312.796 145.775 305.342 138.412 295.735 132.865C286.238 127.127 276.189 124.258 265.588 124.257C255.208 124.257 248.416 127.03 245.214 132.576C241.902 137.931 243.006 145.39 248.528 154.953L183.928 154.951C174.652 138.885 170.676 124.541 172 111.918C173.546 99.2946 179.84 89.5408 190.882 82.6559C202.035 75.5798 216.887 72.0421 235.439 72.0428C254.874 72.0435 274.144 75.5825 293.248 82.6598C312.242 89.5457 329.579 99.3005 345.261 111.924C360.942 124.548 373.421 138.892 382.697 154.958C391.311 169.877 395.121 182.978 394.128 194.262C393.355 205.546 389.656 215.396 383.031 223.811C376.627 232.226 366.688 242.554 353.217 254.794L435.375 254.797L464.198 304.716L275.367 304.709L246.544 254.79Z"
-                        stroke="#1B1B18" stroke-width="1" stroke-linejoin="round"/>
-                </g>
-                <g style="mix-blend-mode: hard-light"
-                   class="transition-all delay-300 translate-y-0 opacity-100 duration-750 starting:opacity-0 starting:translate-y-4">
-                    <path
-                        d="M67.41 125.402L44.5515 125.401L15.5625 75.1953L101.364 75.1985L233.886 304.712L170.942 304.71L67.41 125.402Z"
-                        fill="#F0ACB8"/>
-                    <path
-                        d="M67.41 125.402L44.5515 125.401L15.5625 75.1953L101.364 75.1985L233.886 304.712L170.942 304.71L67.41 125.402Z"
-                        stroke="#1B1B18" stroke-width="1"/>
-                </g>
-            </svg>
+        <div class="loader-terminal">
+            <div class="lt-bar">
+                <span class="lt-dot r"></span>
+                <span class="lt-dot y"></span>
+                <span class="lt-dot g"></span>
+                <span class="lt-bar-title">portfolio.php — booting</span>
+            </div>
+            <div class="lt-body">
+                <div class="lt-row lt-show">
+                    <span class="lt-prompt">$</span>
+                    <span class="lt-cmd">php artisan serve --host=portofolio.test</span>
+                </div>
+                <div class="lt-row" id="ll-1">
+                    <span class="lt-out">▸ Booting Laravel application...</span>
+                </div>
+                <div class="lt-row" id="ll-2">
+                    <span class="lt-out">▸ Connecting to database...</span>
+                </div>
+                <div class="lt-row" id="ll-3">
+                    <span class="lt-out">▸ Loading portfolio data...</span>
+                </div>
+                <div class="lt-row" id="ll-4">
+                    <span class="lt-out">▸ Compiling assets &amp; styles...</span>
+                </div>
+                <div class="lt-row" id="ll-5">
+                    <span class="lt-ok">✓ Server ready on https://portofolio.test</span>
+                </div>
 
-            {{-- Dark Mode 12 SVG --}}
-            <svg class="w-[448px] max-w-none relative -mt-[4.9rem] -ml-8 lg:ml-0 lg:-mt-[6.6rem] hidden dark:block"
-                 viewBox="0 0 440 376" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g class="transition-all delay-300 translate-y-0 opacity-100 duration-750 starting:opacity-0 starting:translate-y-4">
-                    <path
-                        d="M188.263 355.73L188.595 355.73C195.441 348.845 205.766 339.761 219.569 328.477C232.93 317.193 242.978 308.205 249.714 301.511C256.34 294.626 260.867 287.358 263.296 279.708C265.725 272.058 264.565 264.121 259.816 255.896C254.516 246.716 247.062 239.352 237.454 233.805C227.957 228.067 217.908 225.198 207.307 225.198C196.927 225.197 190.136 227.97 186.934 233.516C183.621 238.872 184.726 246.331 190.247 255.894L125.647 255.891C116.371 239.825 112.395 225.481 113.72 212.858C115.265 200.235 121.559 190.481 132.602 183.596C143.754 176.52 158.607 172.982 177.159 172.983C196.594 172.984 215.863 176.523 234.968 183.6C253.961 190.486 271.299 200.241 286.98 212.864C302.661 225.488 315.14 239.833 324.416 255.899C333.03 270.817 336.841 283.918 335.847 295.203C335.075 306.487 331.376 316.336 324.75 324.751C318.346 333.167 308.408 343.494 294.936 355.734L377.094 355.737L405.917 405.656L217.087 405.649L188.263 355.73Z"
-                        fill="black"/>
-                    <path
-                        d="M9.11884 226.339L-13.7396 226.338L-42.7286 176.132L43.0733 176.135L175.595 405.649L112.651 405.647L9.11884 226.339Z"
-                        fill="black"/>
-                    <path
-                        d="M188.263 355.73L188.595 355.73C195.441 348.845 205.766 339.761 219.569 328.477C232.93 317.193 242.978 308.205 249.714 301.511C256.34 294.626 260.867 287.358 263.296 279.708C265.725 272.058 264.565 264.121 259.816 255.896C254.516 246.716 247.062 239.352 237.454 233.805C227.957 228.067 217.908 225.198 207.307 225.198C196.927 225.197 190.136 227.97 186.934 233.516C183.621 238.872 184.726 246.331 190.247 255.894L125.647 255.891C116.371 239.825 112.395 225.481 113.72 212.858C115.265 200.235 121.559 190.481 132.602 183.596C143.754 176.52 158.607 172.982 177.159 172.983C196.594 172.984 215.863 176.523 234.968 183.6C253.961 190.486 271.299 200.241 286.98 212.864C302.661 225.488 315.14 239.833 324.416 255.899C333.03 270.817 336.841 283.918 335.847 295.203C335.075 306.487 331.376 316.336 324.75 324.751C318.346 333.167 308.408 343.494 294.936 355.734L377.094 355.737L405.917 405.656L217.087 405.649L188.263 355.73Z"
-                        stroke="#FF750F" stroke-width="1"/>
-                    <path
-                        d="M9.11884 226.339L-13.7396 226.338L-42.7286 176.132L43.0733 176.135L175.595 405.649L112.651 405.647L9.11884 226.339Z"
-                        stroke="#FF750F" stroke-width="1"/>
-                    <path
-                        d="M204.592 327.449L204.923 327.449C211.769 320.564 222.094 311.479 235.897 300.196C249.258 288.912 259.306 279.923 266.042 273.23C272.668 266.345 277.195 259.077 279.624 251.427C282.053 243.777 280.893 235.839 276.145 227.615C270.844 218.435 263.39 211.071 253.782 205.524C244.285 199.786 234.236 196.917 223.635 196.916C213.255 196.916 206.464 199.689 203.262 205.235C199.949 210.59 201.054 218.049 206.575 227.612L141.975 227.61C132.699 211.544 128.723 197.2 130.048 184.577C131.593 171.954 137.887 162.2 148.93 155.315C160.083 148.239 174.935 144.701 193.487 144.702C212.922 144.703 232.192 148.242 251.296 155.319C270.289 162.205 287.627 171.96 303.308 184.583C318.989 197.207 331.468 211.552 340.745 227.618C349.358 242.536 353.169 255.637 352.175 266.921C351.403 278.205 347.704 288.055 341.078 296.47C334.674 304.885 324.736 315.213 311.264 327.453L393.422 327.456L422.246 377.375L233.415 377.368L204.592 327.449Z"
-                        fill="#391800"/>
-                    <path
-                        d="M25.447 198.058L2.58852 198.057L-26.4005 147.851L59.4015 147.854L191.923 377.368L128.979 377.365L25.447 198.058Z"
-                        fill="#391800"/>
-                    <path
-                        d="M204.592 327.449L204.923 327.449C211.769 320.564 222.094 311.479 235.897 300.196C249.258 288.912 259.306 279.923 266.042 273.23C272.668 266.345 277.195 259.077 279.624 251.427C282.053 243.777 280.893 235.839 276.145 227.615C270.844 218.435 263.39 211.071 253.782 205.524C244.285 199.786 234.236 196.917 223.635 196.916C213.255 196.916 206.464 199.689 203.262 205.235C199.949 210.59 201.054 218.049 206.575 227.612L141.975 227.61C132.699 211.544 128.723 197.2 130.048 184.577C131.593 171.954 137.887 162.2 148.93 155.315C160.083 148.239 174.935 144.701 193.487 144.702C212.922 144.703 232.192 148.242 251.296 155.319C270.289 162.205 287.627 171.96 303.308 184.583C318.989 197.207 331.468 211.552 340.745 227.618C349.358 242.536 353.169 255.637 352.175 266.921C351.403 278.205 347.704 288.055 341.078 296.47C334.674 304.885 324.736 315.213 311.264 327.453L393.422 327.456L422.246 377.375L233.415 377.368L204.592 327.449Z"
-                        stroke="#FF750F" stroke-width="1"/>
-                    <path
-                        d="M25.447 198.058L2.58852 198.057L-26.4005 147.851L59.4015 147.854L191.923 377.368L128.979 377.365L25.447 198.058Z"
-                        stroke="#FF750F" stroke-width="1"/>
-                </g>
-                <g class="transition-all delay-300 translate-y-0 opacity-100 duration-750 starting:opacity-0 starting:translate-y-4"
-                   style="mix-blend-mode:hard-light">
-                    <path
-                        d="M217.342 305.363L217.673 305.363C224.519 298.478 234.844 289.393 248.647 278.11C262.008 266.826 272.056 257.837 278.792 251.144C285.418 244.259 289.945 236.991 292.374 229.341C294.803 221.691 293.643 213.753 288.895 205.529C283.594 196.349 276.14 188.985 266.532 183.438C257.035 177.7 246.986 174.831 236.385 174.83C226.005 174.83 219.214 177.603 216.012 183.149C212.699 188.504 213.804 195.963 219.325 205.527L154.725 205.524C145.449 189.458 141.473 175.114 142.798 162.491C144.343 149.868 150.637 140.114 161.68 133.229C172.833 126.153 187.685 122.615 206.237 122.616C225.672 122.617 244.942 126.156 264.046 133.233C283.039 140.119 300.377 149.874 316.058 162.497C331.739 175.121 344.218 189.466 353.495 205.532C362.108 220.45 365.919 233.551 364.925 244.835C364.153 256.12 360.454 265.969 353.828 274.384C347.424 282.799 337.486 293.127 324.014 305.367L406.172 305.37L434.996 355.289L246.165 355.282L217.342 305.363Z"
-                        fill="#733000"/>
-                    <path
-                        d="M38.197 175.972L15.3385 175.971L-13.6505 125.765L72.1515 125.768L204.673 355.282L141.729 355.279L38.197 175.972Z"
-                        fill="#733000"/>
-                    <path
-                        d="M217.342 305.363L217.673 305.363C224.519 298.478 234.844 289.393 248.647 278.11C262.008 266.826 272.056 257.837 278.792 251.144C285.418 244.259 289.945 236.991 292.374 229.341C294.803 221.691 293.643 213.753 288.895 205.529C283.594 196.349 276.14 188.985 266.532 183.438C257.035 177.7 246.986 174.831 236.385 174.83C226.005 174.83 219.214 177.603 216.012 183.149C212.699 188.504 213.804 195.963 219.325 205.527L154.725 205.524C145.449 189.458 141.473 175.114 142.798 162.491C144.343 149.868 150.637 140.114 161.68 133.229C172.833 126.153 187.685 122.615 206.237 122.616C225.672 122.617 244.942 126.156 264.046 133.233C283.039 140.119 300.377 149.874 316.058 162.497C331.739 175.121 344.218 189.466 353.495 205.532C362.108 220.45 365.919 233.551 364.925 244.835C364.153 256.12 360.454 265.969 353.828 274.384C347.424 282.799 337.486 293.127 324.014 305.367L406.172 305.37L434.996 355.289L246.165 355.282L217.342 305.363Z"
-                        stroke="#FF750F" stroke-width="1"/>
-                    <path
-                        d="M38.197 175.972L15.3385 175.971L-13.6505 125.765L72.1515 125.768L204.673 355.282L141.729 355.279L38.197 175.972Z"
-                        stroke="#FF750F" stroke-width="1"/>
-                </g>
-                <g class="transition-all delay-300 translate-y-0 opacity-100 duration-750 starting:opacity-0 starting:translate-y-4">
-                    <path
-                        d="M217.342 305.363L217.673 305.363C224.519 298.478 234.844 289.393 248.647 278.11C262.008 266.826 272.056 257.837 278.792 251.144C285.418 244.259 289.945 236.991 292.374 229.341C294.803 221.691 293.643 213.753 288.895 205.529C283.594 196.349 276.14 188.985 266.532 183.438C257.035 177.7 246.986 174.831 236.385 174.83C226.005 174.83 219.214 177.603 216.012 183.149C212.699 188.504 213.804 195.963 219.325 205.527L154.726 205.524C145.449 189.458 141.473 175.114 142.798 162.491C144.343 149.868 150.637 140.114 161.68 133.229C172.833 126.153 187.685 122.615 206.237 122.616C225.672 122.617 244.942 126.156 264.046 133.233C283.039 140.119 300.377 149.874 316.058 162.497C331.739 175.121 344.218 189.466 353.495 205.532C362.108 220.45 365.919 233.551 364.925 244.835C364.153 256.12 360.454 265.969 353.828 274.384C347.424 282.799 337.486 293.127 324.014 305.367L406.172 305.37L434.996 355.289L246.165 355.282L217.342 305.363Z"
-                        stroke="#FF750F" stroke-width="1"/>
-                    <path
-                        d="M38.197 175.972L15.3385 175.971L-13.6505 125.765L72.1515 125.768L204.673 355.282L141.729 355.279L38.197 175.972Z"
-                        stroke="#FF750F" stroke-width="1"/>
-                </g>
-                <g class="transition-all delay-300 translate-y-0 opacity-100 duration-750 starting:opacity-0 starting:translate-y-4">
-                    <path
-                        d="M188.467 355.363L188.798 355.363C195.644 348.478 205.969 339.393 219.772 328.11C233.133 316.826 243.181 307.837 249.917 301.144C253.696 297.217 256.792 293.166 259.205 288.991C261.024 285.845 262.455 282.628 263.499 279.341C265.928 271.691 264.768 263.753 260.02 255.529C254.719 246.349 247.265 238.985 237.657 233.438C228.16 227.7 218.111 224.831 207.51 224.83C197.13 224.83 190.339 227.603 187.137 233.149C183.824 238.504 184.929 245.963 190.45 255.527L125.851 255.524C116.574 239.458 112.598 225.114 113.923 212.491C114.615 206.836 116.261 201.756 118.859 197.253C122.061 191.704 126.709 187.03 132.805 183.229C143.958 176.153 158.81 172.615 177.362 172.616C196.797 172.617 216.067 176.156 235.171 183.233C254.164 190.119 271.502 199.874 287.183 212.497C302.864 225.121 315.343 239.466 324.62 255.532C333.233 270.45 337.044 283.551 336.05 294.835C335.46 303.459 333.16 311.245 329.151 318.194C327.915 320.337 326.515 322.4 324.953 324.384C318.549 332.799 308.611 343.127 295.139 355.367L377.297 355.37L406.121 405.289L217.29 405.282L188.467 355.363Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M9.32197 225.972L-13.5365 225.971L-42.5255 175.765L43.2765 175.768L175.798 405.282L112.854 405.279L9.32197 225.972Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M345.247 111.915C329.566 99.2919 312.229 89.5371 293.235 82.6512L235.167 183.228C254.161 190.114 271.498 199.869 287.179 212.492L345.247 111.915Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M382.686 154.964C373.41 138.898 360.931 124.553 345.25 111.93L287.182 212.506C302.863 225.13 315.342 239.475 324.618 255.541L382.686 154.964Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M293.243 82.6472C274.139 75.57 254.869 72.031 235.434 72.0303L177.366 172.607C196.801 172.608 216.071 176.147 235.175 183.224L293.243 82.6472Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M394.118 194.257C395.112 182.973 391.301 169.872 382.688 154.953L324.619 255.53C333.233 270.448 337.044 283.55 336.05 294.834L394.118 194.257Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M235.432 72.0311C216.88 72.0304 202.027 75.5681 190.875 82.6442L132.806 183.221C143.959 176.145 158.812 172.607 177.363 172.608L235.432 72.0311Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M265.59 124.25C276.191 124.251 286.24 127.12 295.737 132.858L237.669 233.435C228.172 227.697 218.123 224.828 207.522 224.827L265.59 124.25Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M295.719 132.859C305.326 138.406 312.78 145.77 318.081 154.95L260.013 255.527C254.712 246.347 247.258 238.983 237.651 233.436L295.719 132.859Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M387.218 217.608C391.227 210.66 393.527 202.874 394.117 194.25L336.049 294.827C335.459 303.451 333.159 311.237 329.15 318.185L387.218 217.608Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M245.211 132.577C248.413 127.03 255.204 124.257 265.584 124.258L207.516 224.835C197.136 224.834 190.345 227.607 187.143 233.154L245.211 132.577Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M318.094 154.945C322.842 163.17 324.002 171.107 321.573 178.757L263.505 279.334C265.934 271.684 264.774 263.746 260.026 255.522L318.094 154.945Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M176.925 96.6737C180.127 91.1249 184.776 86.4503 190.871 82.6499L132.803 183.227C126.708 187.027 122.059 191.702 118.857 197.25L176.925 96.6737Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M387.226 217.606C385.989 219.749 384.59 221.813 383.028 223.797L324.96 324.373C326.522 322.39 327.921 320.326 329.157 318.183L387.226 217.606Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M317.269 188.408C319.087 185.262 320.519 182.045 321.562 178.758L263.494 279.335C262.451 282.622 261.019 285.839 259.201 288.985L317.269 188.408Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M245.208 132.573C241.895 137.928 243 145.387 248.522 154.95L190.454 255.527C184.932 245.964 183.827 238.505 187.14 233.15L245.208 132.573Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M176.93 96.6719C174.331 101.175 172.686 106.255 171.993 111.91L113.925 212.487C114.618 206.831 116.263 201.752 118.862 197.249L176.93 96.6719Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M317.266 188.413C314.853 192.589 311.757 196.64 307.978 200.566L249.91 301.143C253.689 297.216 256.785 293.166 259.198 288.99L317.266 188.413Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M464.198 304.708L435.375 254.789L377.307 355.366L406.13 405.285L464.198 304.708Z"
-                          stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M353.209 254.787C366.68 242.548 376.618 232.22 383.023 223.805L324.955 324.382C318.55 332.797 308.612 343.124 295.141 355.364L353.209 254.787Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M435.37 254.787L353.212 254.784L295.144 355.361L377.302 355.364L435.37 254.787Z"
-                          stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M183.921 154.947L248.521 154.95L190.453 255.527L125.853 255.524L183.921 154.947Z"
-                          stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M171.992 111.914C170.668 124.537 174.643 138.881 183.92 154.947L125.852 255.524C116.575 239.458 112.599 225.114 113.924 212.491L171.992 111.914Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M307.987 200.562C301.251 207.256 291.203 216.244 277.842 227.528L219.774 328.105C233.135 316.821 243.183 307.832 249.919 301.139L307.987 200.562Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M15.5469 75.1797L44.5359 125.386L-13.5321 225.963L-42.5212 175.756L15.5469 75.1797Z"
-                          stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M277.836 227.536C264.033 238.82 253.708 247.904 246.862 254.789L188.794 355.366C195.64 348.481 205.965 339.397 219.768 328.113L277.836 227.536Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M275.358 304.706L464.189 304.713L406.12 405.29L217.29 405.283L275.358 304.706Z"
-                          stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M44.5279 125.39L67.3864 125.39L9.31834 225.967L-13.5401 225.966L44.5279 125.39Z"
-                          stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path
-                        d="M101.341 75.1911L233.863 304.705L175.795 405.282L43.2733 175.768L101.341 75.1911ZM15.5431 75.19L-42.525 175.767L43.277 175.77L101.345 75.1932L15.5431 75.19Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M246.866 254.784L246.534 254.784L188.466 355.361L188.798 355.361L246.866 254.784Z"
-                          stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M246.539 254.781L275.362 304.701L217.294 405.277L188.471 355.358L246.539 254.781Z"
-                          stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M67.3906 125.391L170.923 304.698L112.855 405.275L9.32257 225.967L67.3906 125.391Z"
-                          stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                    <path d="M170.921 304.699L233.865 304.701L175.797 405.278L112.853 405.276L170.921 304.699Z"
-                          stroke="#FF750F" stroke-width="1" stroke-linejoin="bevel"/>
-                </g>
-                <g class="transition-all delay-300 translate-y-0 opacity-100 duration-750 starting:opacity-0 starting:translate-y-4"
-                   style="mix-blend-mode:hard-light">
-                    <path
-                        d="M246.544 254.79L246.875 254.79C253.722 247.905 264.046 238.82 277.849 227.537C291.21 216.253 301.259 207.264 307.995 200.57C314.62 193.685 319.147 186.418 321.577 178.768C324.006 171.117 322.846 163.18 318.097 154.956C312.796 145.775 305.342 138.412 295.735 132.865C286.238 127.127 276.189 124.258 265.588 124.257C255.208 124.257 248.416 127.03 245.214 132.576C241.902 137.931 243.006 145.39 248.528 154.953L183.928 154.951C174.652 138.885 170.676 124.541 172 111.918C173.546 99.2946 179.84 89.5408 190.882 82.6559C202.035 75.5798 216.887 72.0421 235.439 72.0428C254.874 72.0435 274.144 75.5825 293.248 82.6598C312.242 89.5457 329.579 99.3005 345.261 111.924C360.942 124.548 373.421 138.892 382.697 154.958C391.311 169.877 395.121 182.978 394.128 194.262C393.355 205.546 389.656 215.396 383.031 223.811C376.627 232.226 366.688 242.554 353.217 254.794L435.375 254.797L464.198 304.716L275.367 304.709L246.544 254.79Z"
-                        fill="#4B0600"/>
-                    <path
-                        d="M246.544 254.79L246.875 254.79C253.722 247.905 264.046 238.82 277.849 227.537C291.21 216.253 301.259 207.264 307.995 200.57C314.62 193.685 319.147 186.418 321.577 178.768C324.006 171.117 322.846 163.18 318.097 154.956C312.796 145.775 305.342 138.412 295.735 132.865C286.238 127.127 276.189 124.258 265.588 124.257C255.208 124.257 248.416 127.03 245.214 132.576C241.902 137.931 243.006 145.39 248.528 154.953L183.928 154.951C174.652 138.885 170.676 124.541 172 111.918C173.546 99.2946 179.84 89.5408 190.882 82.6559C202.035 75.5798 216.887 72.0421 235.439 72.0428C254.874 72.0435 274.144 75.5825 293.248 82.6598C312.242 89.5457 329.579 99.3005 345.261 111.924C360.942 124.548 373.421 138.892 382.697 154.958C391.311 169.877 395.121 182.978 394.128 194.262C393.355 205.546 389.656 215.396 383.031 223.811C376.627 232.226 366.688 242.554 353.217 254.794L435.375 254.797L464.198 304.716L275.367 304.709L246.544 254.79Z"
-                        stroke="#FF750F" stroke-width="1" stroke-linejoin="round"/>
-                </g>
-                <g class="transition-all delay-300 translate-y-0 opacity-100 duration-750 starting:opacity-0 starting:translate-y-4"
-                   style="mix-blend-mode:hard-light">
-                    <path
-                        d="M67.41 125.402L44.5515 125.401L15.5625 75.1953L101.364 75.1985L233.886 304.712L170.942 304.71L67.41 125.402Z"
-                        fill="#4B0600"/>
-                    <path
-                        d="M67.41 125.402L44.5515 125.401L15.5625 75.1953L101.364 75.1985L233.886 304.712L170.942 304.71L67.41 125.402Z"
-                        stroke="#FF750F" stroke-width="1"/>
-                </g>
-            </svg>
-            <div
-                class="absolute inset-0 rounded-t-lg lg:rounded-t-none lg:rounded-r-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]"></div>
+                <div class="lt-progress-wrap">
+                    <span class="lt-pct" id="lt-pct">0%</span>
+                    <div class="lt-track">
+                        <div class="lt-fill" id="lt-fill"></div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div class="loader-bottom">
+            <div class="loader-title">Mohon tunggu sebentar<span class="loader-dots"><span>.</span><span>.</span><span>.</span></span></div>
+            <div class="loader-sub" id="loader-sub">Initializing portfolio_v1.0</div>
+        </div>
+    </div>
+    <!-- ═══════════════════════════════════════ -->
+
+    <div class="cursor-glow" id="cursor-glow"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <header>
+        <div class="wrap">
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#skills">Skills</a></li>
+                    <li><a href="#experience">Experience</a></li>
+                    <li><a href="#projects">Projects</a></li>
+                    <li><a href="#organizations">Organizations</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+
+        {{-- HERO --}}
+        <section id="about" style="padding-top:0.5rem;">
+            <div class="wrap">
+                <div class="hero-grid">
+
+                    {{-- Text --}}
+                    <div class="reveal-l">
+                        <div class="eyebrow">Portfolio</div>
+                        <h1>
+                            <span class="hi">Hi, I'm</span>
+                            <span class="name">{{ $profile?->name ?? 'Your Name' }}</span>
+                        </h1>
+                        <div class="hero-role">{{ $profile?->title ?? 'Developer & Creator' }}</div>
+                        <div class="hero-bio">
+                            @if($profile && $profile->description)
+                                {!! $profile->description !!}
+                            @else
+                                <p>Welcome to my digital space. I craft meaningful experiences on the web and always chase
+                                    the next interesting challenge.</p>
+                            @endif
+                        </div>
+
+                        <div class="hero-actions">
+                            <a href="/cv.pdf" download class="btn-cv">
+                                <i class="fa-solid fa-download"></i> Download CV
+                            </a>
+                            <div class="socials">
+                                @if($profile)
+                                    @if($profile->email)
+                                        <a href="mailto:{{ $profile->email }}" class="social-btn" title="Email"><i
+                                                class="fa-solid fa-envelope"></i></a>
+                                    @endif
+                                    @if($profile->phone)
+                                        <a href="tel:{{ $profile->phone }}" class="social-btn" title="Phone"><i
+                                                class="fa-solid fa-phone"></i></a>
+                                    @endif
+                                    @if($profile->github)
+                                        <a href="{{ $profile->github }}" target="_blank" class="social-btn" title="GitHub"><i
+                                                class="fa-brands fa-github"></i></a>
+                                    @endif
+                                    @if($profile->linkedin)
+                                        <a href="{{ $profile->linkedin }}" target="_blank" class="social-btn"
+                                            title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                                    @endif
+                                    @if($profile->instagram)
+                                        <a href="{{ $profile->instagram }}" target="_blank" class="social-btn"
+                                            title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                                    @endif
+                                @endif
+                        </div>
+                        </div>
+
+                        {{-- Tech Stack pills — inside left column --}}
+                        <div class="tech-stack-row">
+                            <span class="tech-pill tp-github"><i class="fa-brands fa-github"></i> GitHub</span>
+                            <span class="tech-pill tp-php"><i class="fa-brands fa-php"></i> PHP</span>
+                            <span class="tech-pill tp-react"><i class="fa-brands fa-react"></i> React</span>
+                            <span class="tech-pill tp-js"><i class="fa-brands fa-js"></i> TypeScript</span>
+                            <span class="tech-pill tp-docker"><i class="fa-brands fa-docker"></i> Docker</span>
+                            <span class="tech-pill tp-git"><i class="fa-brands fa-git-alt"></i> Git</span>
+                            <span class="tech-pill tp-db"><i class="fa-solid fa-database"></i> MySQL</span>
+                            <span class="tech-pill tp-linux"><i class="fa-brands fa-linux"></i> Linux</span>
+                        </div>
+                        <div class="git-status-bar">
+                            <i class="fa-solid fa-code-branch" style="color:#c084fc"></i>
+                            <span class="gsb-branch">main</span>
+                            <span class="gsb-sep">|</span>
+                            <span class="gsb-ok"><i class="fa-solid fa-circle-check"></i> working tree clean</span>
+                            <span class="gsb-sep">|</span>
+                            <span style="color:var(--accent);font-size:0.62rem;"><i class="fa-solid fa-code-commit"></i> HEAD~47</span>
+                        </div>
+                    </div>
+
+                    {{-- Right column: contribution graph + lanyard --}}
+                    <div class="hero-right-col">
+                        <div class="contrib-wrapper">
+                            <div class="contrib-label">// contributions &mdash; last 26 weeks</div>
+                            <div class="contrib-graph" id="contrib-graph"
+                                 data-github="{{ $profile?->github ?? '' }}"></div>
+                        </div>
+
+                        {{-- Lanyard --}}
+                        <div class="lanyard-scene reveal-r" id="lanyard-scene">
+                            <div class="pin" id="lanyard-pin"></div>
+
+                            <div id="lanyard-swing">
+                                <div class="id-card">
+                                    <div class="id-top"></div>
+                                    <div class="id-hole-row">
+                                        <div class="id-hole"></div>
+                                    </div>
+                                    <div class="id-body">
+                                        @if($profile && $profile->photo)
+                                            <img src="{{ asset('storage/' . $profile->photo) }}" alt="{{ $profile->name }}"
+                                                class="id-photo">
+                                        @else
+                                            <svg class="id-photo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"
+                                                style="background:var(--surface-2);">
+                                                <circle cx="50" cy="40" r="17" fill="#3a3a42" />
+                                                <path d="M22 80C22 64 35 54 50 54C65 54 78 64 78 80Z" fill="#3a3a42" />
+                                            </svg>
+                                        @endif
+                                        <div class="id-name">{{ $profile?->name ?? 'Your Name' }}</div>
+                                        <div class="id-role">{{ $profile?->title ?? 'Developer' }}</div>
+                                        <hr class="id-divider">
+                                        <div class="id-barcode">
+                                            <span style="width:3px"></span><span style="width:5px"></span>
+                                            <span style="width:2px"></span><span style="width:7px"></span>
+                                            <span style="width:4px"></span><span style="width:2px"></span>
+                                            <span style="width:6px"></span><span style="width:3px"></span>
+                                            <span style="width:5px"></span><span style="width:4px"></span>
+                                            <span style="width:2px"></span><span style="width:8px"></span>
+                                            <span style="width:3px"></span><span style="width:5px"></span>
+                                            <span style="width:2px"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+
+        {{-- SKILLS --}}
+        <section id="skills">
+            <div class="wrap">
+                <div class="reveal">
+                    <div class="sec-kicker">Expertise</div>
+                    <div class="sec-title">Skills</div>
+                    <div class="sec-sub">Technologies and tools I work with on a daily basis.</div>
+                </div>
+                @php $groupedSkills = $skills->groupBy('category'); @endphp
+
+                {{-- Decorative package.json panel --}}
+                <div class="deps-panel">
+                    <div class="dp-header">
+                        <span class="dp-dot r"></span>
+                        <span class="dp-dot y"></span>
+                        <span class="dp-dot g"></span>
+                        <span class="dp-title">composer.json</span>
+                    </div>
+                    <div class="dp-body">
+                        <div class="dp-row"><span class="dp-obj">{</span></div>
+                        <div class="dp-row"><span class="dp-key">&nbsp;&nbsp;"laravel/framework"</span><span class="dp-val">"^11.0"</span></div>
+                        <div class="dp-row"><span class="dp-key">&nbsp;&nbsp;"php"</span><span class="dp-val">"^8.2"</span></div>
+                        <div class="dp-row"><span class="dp-key">&nbsp;&nbsp;"inertiajs/inertia"</span><span class="dp-val">"^1.0"</span></div>
+                        <div class="dp-row"><span class="dp-key">&nbsp;&nbsp;"react"</span><span class="dp-val">"^18.0"</span></div>
+                        <div class="dp-row"><span class="dp-key">&nbsp;&nbsp;"typescript"</span><span class="dp-val">"^5.0"</span></div>
+                        <div class="dp-row"><span class="dp-obj">}</span></div>
+                    </div>
+                </div>
+
+                <div class="skills-grid stagger">
+                    @forelse($groupedSkills as $cat => $items)
+                        <div class="card">
+                            <div class="sg-title">{{ $cat }}</div>
+                            @foreach($items as $skill)
+                                <div class="skill">
+                                    <div class="skill-row">
+                                        <span>{{ $skill->name }}</span>
+                                        <span class="skill-pct">{{ $skill->proficiency }}%</span>
+                                    </div>
+                                    <div class="skill-track">
+                                        <div class="skill-fill" data-width="{{ $skill->proficiency }}"></div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @empty
+                        <div class="empty"><i class="fa-solid fa-bolt"></i>
+                            <p>No skills yet.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </section>
+
+        {{-- EXPERIENCE & EDUCATION --}}
+        <section id="experience">
+            <div class="wrap">
+                <div class="timeline-grid">
+                    <div class="reveal-l">
+                        <h2 class="tl-head"><i class="fa-solid fa-briefcase"></i> Experience</h2>
+                        <div class="timeline">
+                            @forelse($experiences as $e)
+                                <div class="tl-item">
+                                    <div class="tl-date">
+                                        {{ $e->start_date->format('M Y') }} —
+                                        {{ $e->is_current ? 'Present' : ($e->end_date ? $e->end_date->format('M Y') : '') }}
+                                    </div>
+                                    <div class="tl-title">{{ $e->role }}</div>
+                                    <div class="tl-sub">{{ $e->company }}</div>
+                                    @if($e->description)
+                                    <div class="tl-desc">{!! $e->description !!}</div>@endif
+                                </div>
+                            @empty
+                                <p style="color:var(--muted);font-size:.85rem;">No experience listed yet.</p>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <div class="reveal-r" id="education">
+                        <h2 class="tl-head"><i class="fa-solid fa-graduation-cap"></i> Education</h2>
+                        <div class="timeline">
+                            @forelse($education as $edu)
+                                <div class="tl-item">
+                                    <div class="tl-date">
+                                        {{ $edu->start_date->format('Y') }} —
+                                        {{ $edu->is_current ? 'Present' : ($edu->end_date ? $edu->end_date->format('Y') : '') }}
+                                    </div>
+                                    <div class="tl-title">{{ $edu->degree }} — {{ $edu->major }}</div>
+                                    <div class="tl-sub">{{ $edu->institution }}</div>
+                                    @if($edu->description)
+                                    <div class="tl-desc">{!! $edu->description !!}</div>@endif
+                                </div>
+                            @empty
+                                <p style="color:var(--muted);font-size:.85rem;">No education listed yet.</p>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {{-- PROJECTS --}}
+        <section id="projects">
+            <div class="wrap">
+                <div class="reveal" style="position:relative;">
+                    <div class="commit-badge">
+                        <span class="cb-hash">a3f9c12</span>
+                        <span class="cb-msg">feat: add new project showcase</span>
+                    </div>
+                    <div class="sec-kicker">My Work</div>
+                    <div class="sec-title">Projects <span class="inline-code-decor">$projects</span></div>
+                    <div class="sec-sub">Selected projects I've built or contributed to.</div>
+                </div>
+                @php
+                $projGradients = [
+                    'linear-gradient(135deg, #0d1b2a 0%, #1a3a5c 60%, #0a2540 100%)',
+                    'linear-gradient(135deg, #1a0533 0%, #2e0a5e 60%, #3d0080 100%)',
+                    'linear-gradient(135deg, #0a1f0a 0%, #1a4d1a 60%, #1e5c1e 100%)',
+                    'linear-gradient(135deg, #1f0a00 0%, #4d1f00 60%, #6b2d00 100%)',
+                    'linear-gradient(135deg, #001525 0%, #002a47 60%, #003a63 100%)',
+                    'linear-gradient(135deg, #1a001a 0%, #330033 60%, #4a0050 100%)',
+                    'linear-gradient(135deg, #001a1a 0%, #003333 60%, #004747 100%)',
+                    'linear-gradient(135deg, #1a1500 0%, #3d3200 60%, #5c4a00 100%)',
+                    'linear-gradient(135deg, #0f0f1a 0%, #1a1a3d 60%, #22224d 100%)',
+                    'linear-gradient(135deg, #1a0a0a 0%, #3d1515 60%, #5c1e1e 100%)',
+                ];
+                @endphp
+                <div class="proj-grid stagger">
+                    @forelse($projects as $p)
+                        @php $grad = $projGradients[$loop->index % count($projGradients)]; @endphp
+                        <div class="card proj-card">
+                            <div class="proj-thumb">
+                                @if($p->image)
+                                    <img src="{{ asset('storage/' . $p->image) }}" alt="{{ $p->title }}">
+                                @else
+                                    <div class="no-img" style="--proj-grad: {{ $grad }}">
+                                        <div class="proj-thumb-icon">
+                                            <span class="proj-thumb-initial">{{ mb_substr($p->title, 0, 2) }}</span>
+                                            <i class="fa-solid fa-code"></i>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="proj-body">
+                                <div class="proj-title" title="{{ $p->title }}">{{ $p->title }}</div>
+                                <div class="proj-desc">{!! $p->description !!}</div>
+                                <div class="tags">
+                                    @if($p->tech_stack)
+                                        @foreach(explode(',', $p->tech_stack) as $t)
+                                            <span class="tag">{{ trim($t) }}</span>
+                                        @endforeach
+                                    @endif
+                                    @if($p->api_stack)
+                                        @foreach(explode(',', $p->api_stack) as $a)
+                                            <span class="tag tag-api"><i class="fa-solid fa-plug"></i>{{ trim($a) }}</span>
+                                        @endforeach
+                                    @endif
+                                </div>
+                                @if($p->link)
+                                    <a href="{{ $p->link }}" target="_blank" class="proj-link">
+                                        View project <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <div class="empty"><i class="fa-solid fa-folder-open"></i>
+                            <p>No projects yet.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </section>
+
+        {{-- ORGANIZATIONS --}}
+        <section id="organizations">
+            <div class="wrap">
+                <div class="reveal" style="position:relative;">
+                    <div class="git-log-panel">
+                        <div><span class="glp-hash">HEAD</span> → main</div>
+                        <div><span class="glp-ok">✓</span> org.records</div>
+                        <div><span class="glp-warn">⊕</span> roles.data</div>
+                        <div><span class="glp-ok">✓</span> teams.json</div>
+                    </div>
+                    <div class="commit-badge">
+                        <span class="cb-hash">e71b334</span>
+                        <span class="cb-msg">feat: add org involvements</span>
+                    </div>
+                    <div class="sec-kicker">Community</div>
+                    <div class="sec-title">Organizations <span class="inline-code-decor">$orgs</span></div>
+                    <div class="sec-sub">Roles and involvements in communities and organizations.</div>
+                </div>
+                <div class="org-grid stagger">
+                    @forelse($organizations as $o)
+                        <div class="card org-card">
+                            <div class="tl-date" style="margin-bottom:.4rem;">
+                                {{ $o->start_date->format('M Y') }} —
+                                {{ $o->is_current ? 'Present' : ($o->end_date ? $o->end_date->format('M Y') : '') }}
+                            </div>
+                            <div class="tl-title" style="margin-bottom:.22rem;">{{ $o->role }}</div>
+                            <div class="tl-sub" style="color:var(--green);margin-bottom:.75rem;">{{ $o->name }}</div>
+                            @if($o->description)
+                            <div class="tl-desc">{!! $o->description !!}</div>@endif
+                        </div>
+                    @empty
+                        <div class="empty"><i class="fa-solid fa-users"></i>
+                            <p>No organizations yet.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </section>
+
     </main>
-</div>
 
-@if (Route::has('login'))
-    <div class="h-14.5 hidden lg:block"></div>
-@endif
+    <footer>
+        <div class="wrap">
+            <p>&copy; {{ date('Y') }} {{ $profile?->name ?? 'Developer' }}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Lofi Player -->
+    <div class="lofi-player" id="lofi-player">
+        <div class="lp-disc-wrapper">
+            <div class="lp-disc">
+                <div class="lp-disc-inner"></div>
+            </div>
+            <button class="lp-play-btn" id="lp-play-toggle" aria-label="Play/Pause music">
+                <i class="fa-solid fa-play" id="lp-play-icon"></i>
+            </button>
+        </div>
+        <div class="lp-info">
+            <div class="lp-title">Japanese Lofi Cafe</div>
+            <div class="lp-status">
+                <span id="lp-status-text">Click to play</span>
+                <div class="lp-visualizer">
+                    <div class="lp-bar"></div>
+                    <div class="lp-bar"></div>
+                    <div class="lp-bar"></div>
+                    <div class="lp-bar"></div>
+                </div>
+            </div>
+        </div>
+        <div class="lp-controls">
+            <button class="lp-volume-btn" id="lp-volume-toggle" aria-label="Mute/Unmute">
+                <i class="fa-solid fa-volume-high" id="lp-volume-icon"></i>
+            </button>
+            <input type="range" class="lp-volume-slider" id="lp-volume-slider" min="0" max="1" step="0.05" value="0.5">
+        </div>
+        <audio id="lp-audio" preload="none">
+            <source src="https://listen.moe/stream" type="audio/mpeg">
+            <source src="https://streams.fluxfm.de/Chillhop/mp3-128/" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <!-- Floating Code Widget -->
+    <div class="code-widget" id="code-widget">
+        <div class="cw-bar">
+            <span class="cw-dot r"></span>
+            <span class="cw-dot y"></span>
+            <span class="cw-dot g"></span>
+            <span class="cw-filename">portfolio.php</span>
+        </div>
+        <div class="cw-body">
+            <div class="cw-line"><span class="cw-num">1</span><span><span class="cw-kw">class</span> <span class="cw-fn">Developer</span> {</span></div>
+            <div class="cw-line"><span class="cw-num">2</span><span>&nbsp;&nbsp;<span class="cw-kw">public</span> <span class="cw-var">$name</span> <span class="cw-op">=</span> <span class="cw-str">'Erlangga'</span>;</span></div>
+            <div class="cw-line"><span class="cw-num">3</span><span>&nbsp;&nbsp;<span class="cw-kw">public</span> <span class="cw-var">$stack</span> <span class="cw-op">=</span> [</span></div>
+            <div class="cw-line"><span class="cw-num">4</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cw-str">'Laravel'</span>,</span></div>
+            <div class="cw-line"><span class="cw-num">5</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cw-str">'React'</span>,</span></div>
+            <div class="cw-line"><span class="cw-num">6</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cw-str">'TypeScript'</span>,</span></div>
+            <div class="cw-line" id="cw-typing-line"><span class="cw-num">7</span><span id="cw-typing">&nbsp;&nbsp;&nbsp;&nbsp;<span class="cw-str"></span></span><span class="cw-cursor"></span></div>
+        </div>
+    </div>
+
+    <!-- Code Widget Restore Button -->
+    <button class="cw-restore-btn" id="cw-restore-btn" title="Open Terminal">
+        <i class="fa-solid fa-code"></i>
+    </button>
+
+    <!-- Matrix Rain Canvas -->
+    <canvas id="matrix-canvas"></canvas>
+    <script>
+        // ── Matrix Rain ─────────────────────────────────
+        (function() {
+            const canvas = document.getElementById('matrix-canvas');
+            const ctx = canvas.getContext('2d');
+            const chars = '01アイウエオカキクケコ{}[]();=></>function class return const let var if else for while'.split('');
+            let cols, drops;
+            function resize() {
+                canvas.width  = window.innerWidth;
+                canvas.height = window.innerHeight;
+                cols = Math.floor(canvas.width / 18);
+                drops = Array(cols).fill(1);
+            }
+            resize();
+            window.addEventListener('resize', resize);
+            function draw() {
+                ctx.fillStyle = 'rgba(12,12,15,0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#d4a44c';
+                ctx.font = '13px Courier New';
+                drops.forEach((y, i) => {
+                    const c = chars[Math.floor(Math.random() * chars.length)];
+                    ctx.fillText(c, i * 18, y * 18);
+                    if (y * 18 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                    drops[i]++;
+                });
+            }
+            setInterval(draw, 55);
+        })();
+
+        // ── Smooth Nav Scroll + Active State ───────────────────────
+        const secs  = [...document.querySelectorAll('section[id], #education')];
+        const links = [...document.querySelectorAll('.nav-links a')];
+        const hdr   = document.querySelector('header');
+
+        // Custom RAF-based smooth scroll — easeInOutQuart feels very premium
+        function easeInOutQuart(t) {
+            return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
+        }
+        function smoothScrollTo(targetY, duration) {
+            duration = duration || 900;
+            const startY = window.scrollY;
+            const dist   = targetY - startY;
+            const t0     = performance.now();
+            function step(now) {
+                const elapsed  = now - t0;
+                const progress = Math.min(elapsed / duration, 1);
+                window.scrollTo(0, startY + dist * easeInOutQuart(progress));
+                if (progress < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        // Nav-link click handler
+        links.forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                const targetId = this.getAttribute('href');
+                if (!targetId || !targetId.startsWith('#')) return;
+                const target = document.querySelector(targetId);
+                if (!target) return;
+                e.preventDefault();
+
+                const hdrH  = hdr ? hdr.offsetHeight : 64;
+                const destY = target.getBoundingClientRect().top + window.scrollY - hdrH - 12;
+                smoothScrollTo(destY, 900);
+                history.pushState(null, '', targetId);
+
+                // Center active nav link horizontally on click
+                if (window.innerWidth < 768) {
+                    this.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
+
+                // ✨ Golden flash highlight on the target section
+                target.style.transition = 'box-shadow 0.12s ease';
+                target.style.boxShadow  = '0 0 0 2px rgba(212,164,76,0.3), 0 0 50px rgba(212,164,76,0.07)';
+                setTimeout(function() {
+                    target.style.transition = 'box-shadow 0.9s ease';
+                    target.style.boxShadow  = '';
+                }, 900);
+            });
+        });
+
+        // Active nav highlight on scroll with automatic scrollIntoView for active item on mobile
+        let lastActive = '';
+        window.addEventListener('scroll', function() {
+            const hdrH = hdr ? hdr.offsetHeight : 64;
+            let cur = '';
+            secs.forEach(function(s) { if (window.scrollY >= s.offsetTop - hdrH - 25) cur = s.id; });
+            
+            if (cur !== lastActive) {
+                lastActive = cur;
+                links.forEach(function(a) { 
+                    const isActive = a.getAttribute('href') === '#' + cur;
+                    a.classList.toggle('active', isActive);
+                    if (isActive && window.innerWidth < 768) {
+                        a.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
+                });
+            }
+        }, { passive: true });
+
+
+        // ── Scroll Reveal ──────────────────────────────────
+        const io = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (!e.isIntersecting) return;
+                e.target.classList.add('vis');
+                e.target.querySelectorAll('.skill-fill').forEach(b => b.style.width = b.dataset.width + '%');
+                io.unobserve(e.target);
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.reveal,.reveal-l,.reveal-r,.stagger').forEach(el => io.observe(el));
+
+
+
+        // ── Physics Lanyard (canvas rope + spring physics) ────────────────
+        (function () {
+            const scene  = document.getElementById('lanyard-scene');
+            const pinEl  = document.getElementById('lanyard-pin');
+            const swing  = document.getElementById('lanyard-swing');
+
+            // Create canvas for rope
+            const canvas = document.createElement('canvas');
+            canvas.id = 'lanyard-canvas';
+            canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
+            scene.insertBefore(canvas, scene.firstChild);
+            const ctx = canvas.getContext('2d');
+
+            // Physics constants
+            const REST_LEN = 155;  // natural rope length in px
+            const K_SWING  = 0.06; // horizontal spring
+            const K_PULL   = 0.09; // vertical stretch spring
+            const DAMP     = 0.70; // damping factor
+
+            let angle    = -8;    // degrees from vertical
+            let stretch  = 0;     // extra stretch beyond REST_LEN
+            let vAngle   = 0;
+            let vStretch = 0;
+            let isDrag   = false;
+            let prevDx   = 0, prevDy = 0;
+
+            function resizeCanvas() {
+                const r = scene.getBoundingClientRect();
+                canvas.width  = r.width;
+                canvas.height = r.height;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            function getPinCenter() {
+                const pr = pinEl.getBoundingClientRect();
+                const sr = scene.getBoundingClientRect();
+                return {
+                    x: pr.left + pr.width  / 2 - sr.left,
+                    y: pr.top  + pr.height / 2 - sr.top,
+                };
+            }
+
+            function drawRope(px, py, cx, cy) {
+                const dpr = window.devicePixelRatio || 1;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const dist = Math.hypot(cx - px, cy - py);
+                // Sag control point
+                const sag  = dist * 0.18 + Math.abs(stretch) * 0.12;
+                const mx   = (px + cx) / 2;
+                const my   = (py + cy) / 2 + sag;
+
+                // Rope gradient
+                const grad = ctx.createLinearGradient(px, py, cx, cy);
+                grad.addColorStop(0,   '#888');
+                grad.addColorStop(0.5, '#d4a44c');
+                grad.addColorStop(1,   '#b87333');
+
+                ctx.beginPath();
+                ctx.moveTo(px, py);
+                ctx.quadraticCurveTo(mx, my, cx, cy);
+                ctx.strokeStyle = grad;
+                ctx.lineWidth   = 3;
+                ctx.lineCap     = 'round';
+                ctx.stroke();
+
+                // Sheen overlay
+                ctx.beginPath();
+                ctx.moveTo(px, py);
+                ctx.quadraticCurveTo(mx, my - 2, cx, cy);
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+                ctx.lineWidth   = 1.5;
+                ctx.stroke();
+            }
+
+            function tick() {
+                const pin = getPinCenter();
+
+                if (!isDrag) {
+                    vAngle   = (vAngle   - K_SWING * angle)  * DAMP;
+                    vStretch = (vStretch - K_PULL  * stretch) * DAMP;
+                    angle   += vAngle;
+                    stretch += vStretch;
+                    if (Math.abs(vAngle)   < 0.005 && Math.abs(angle)   < 0.005) { angle   = 0; vAngle   = 0; }
+                    if (Math.abs(vStretch) < 0.005 && Math.abs(stretch) < 0.005) { stretch = 0; vStretch = 0; }
+                }
+
+                const totalLen = REST_LEN + stretch;
+                const rad = angle * Math.PI / 180;
+                const cardX = pin.x + Math.sin(rad) * totalLen;   // card-hole x
+                const cardY = pin.y + Math.cos(rad) * totalLen;   // card-hole y
+
+                // Draw rope on canvas
+                drawRope(pin.x, pin.y, cardX, cardY);
+
+                // Position the card — place it so its top-center aligns with cardX,cardY
+                const cardW = swing.offsetWidth  || 210;
+                const cardH = swing.offsetHeight || 290;
+                swing.style.left      = (cardX - cardW / 2) + 'px';
+                swing.style.top       = cardY + 'px';
+                swing.style.transform = `rotate(${angle}deg)`;
+                swing.style.transformOrigin = '50% 0';
+
+                requestAnimationFrame(tick);
+            }
+
+            function pointerStart(cx, cy) {
+                isDrag = true;
+                scene.style.cursor = 'grabbing';
+                const pin = getPinCenter();
+                const sr  = scene.getBoundingClientRect();
+                prevDx = cx - sr.left - pin.x;
+                prevDy = cy - sr.top  - pin.y;
+            }
+
+            function pointerMove(cx, cy) {
+                if (!isDrag) return;
+                const pin = getPinCenter();
+                const sr  = scene.getBoundingClientRect();
+                const dx  = cx - sr.left - pin.x;
+                const dy  = cy - sr.top  - pin.y;
+
+                angle   = Math.max(-72, Math.min(72, Math.atan2(dx, dy) * 180 / Math.PI));
+                const dist = Math.hypot(dx, dy);
+                stretch = Math.max(0, Math.min(220, dist - REST_LEN));
+
+                vAngle   = (dx - prevDx) * 0.45;
+                vStretch = (dy - prevDy) * 0.22;
+                prevDx = dx; prevDy = dy;
+            }
+
+            function pointerEnd() {
+                isDrag = false;
+                scene.style.cursor = 'grab';
+                // Natural upward bounce when released from stretch
+                if (stretch > 10) vStretch = -Math.min(6, stretch * 0.05);
+            }
+
+            scene.addEventListener('mousedown',  e => { pointerStart(e.clientX, e.clientY); e.preventDefault(); });
+            window.addEventListener('mousemove', e => pointerMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup',   () => pointerEnd());
+            scene.addEventListener('touchstart', e => { pointerStart(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); }, { passive: false });
+            window.addEventListener('touchmove', e => { if (isDrag) pointerMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+            window.addEventListener('touchend',  () => pointerEnd());
+
+            tick();
+        })();
+
+        // ── Lofi Player (Audio Stream) ────────────────────────
+        const player     = document.getElementById('lofi-player');
+        const audio      = document.getElementById('lp-audio');
+        const playToggle = document.getElementById('lp-play-toggle');
+        const playIcon   = document.getElementById('lp-play-icon');
+        const statusText = document.getElementById('lp-status-text');
+        const volToggle  = document.getElementById('lp-volume-toggle');
+        const volIcon    = document.getElementById('lp-volume-icon');
+        const volSlider  = document.getElementById('lp-volume-slider');
+
+        let isPlaying  = false;
+        let lastVolume = 0.5;
+
+        audio.volume   = lastVolume;
+        volSlider.value = lastVolume;
+
+        function startPlaying() {
+            player.classList.add('playing');
+            playIcon.className     = 'fa-solid fa-pause';
+            statusText.textContent = 'Playing 🎵';
+            isPlaying = true;
+        }
+
+        function stopPlaying() {
+            audio.pause();
+            player.classList.remove('playing');
+            playIcon.className     = 'fa-solid fa-play';
+            statusText.textContent = 'Paused';
+            isPlaying = false;
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                stopPlaying();
+            } else {
+                statusText.textContent = 'Loading…';
+                audio.load();
+                audio.play()
+                    .then(() => startPlaying())
+                    .catch(err => {
+                        console.warn('Autoplay blocked:', err);
+                        statusText.textContent = 'Click to play';
+                    });
+            }
+        }
+
+        // Autoplay on first user interaction
+        const autoEvents = ['click','keydown','touchstart','mousedown','pointerdown','scroll'];
+        const tryAutoplay = () => {
+            if (!isPlaying) {
+                audio.load();
+                audio.play().then(() => startPlaying()).catch(() => {});
+            }
+            autoEvents.forEach(e => document.removeEventListener(e, tryAutoplay));
+        };
+        autoEvents.forEach(e => document.addEventListener(e, tryAutoplay, { once: true, passive: true }));
+
+        playToggle.addEventListener('click', togglePlay);
+        document.querySelector('.lp-disc').addEventListener('click', togglePlay);
+
+        volSlider.addEventListener('input', e => {
+            const v = parseFloat(e.target.value);
+            audio.volume = v;
+            if (v === 0)      volIcon.className = 'fa-solid fa-volume-xmark';
+            else if (v < 0.5) volIcon.className = 'fa-solid fa-volume-low';
+            else               volIcon.className = 'fa-solid fa-volume-high';
+            if (v > 0) lastVolume = v;
+        });
+
+        volToggle.addEventListener('click', () => {
+            if (audio.volume > 0) {
+                lastVolume      = audio.volume;
+                audio.volume    = 0;
+                volSlider.value = 0;
+                volIcon.className = 'fa-solid fa-volume-xmark';
+            } else {
+                audio.volume    = lastVolume;
+                volSlider.value = lastVolume;
+                volIcon.className = lastVolume < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
+            }
+        });
+
+        // ── Cursor Glow ─────────────────────────────────────
+        const cursorGlow = document.getElementById('cursor-glow');
+        document.addEventListener('mousemove', e => {
+            cursorGlow.style.left = e.clientX + 'px';
+            cursorGlow.style.top = e.clientY + 'px';
+        });
+        document.addEventListener('mouseleave', () => cursorGlow.style.opacity = '0');
+        document.addEventListener('mouseenter', () => cursorGlow.style.opacity = '1');
+
+        // ── Card Tilt Effect ────────────────────────────────
+        document.querySelectorAll('.card').forEach(card => {
+            card.classList.add('tilt-card');
+            card.style.position = 'relative';
+            card.style.overflow = 'hidden';
+            card.addEventListener('mousemove', e => {
+                const r = card.getBoundingClientRect();
+                const x = (e.clientX - r.left) / r.width - 0.5;
+                const y = (e.clientY - r.top)  / r.height - 0.5;
+                card.style.transform = `perspective(600px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateY(-5px)`;
+                card.style.boxShadow = `${-x*12}px ${y*12}px 30px rgba(0,0,0,0.4), 0 0 20px rgba(212,164,76,0.08)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = '';
+                card.style.boxShadow = '';
+            });
+            // Click ripple
+            card.addEventListener('click', e => {
+                const r = card.getBoundingClientRect();
+                const ripple = document.createElement('span');
+                ripple.className = 'ripple';
+                const size = Math.max(r.width, r.height);
+                ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-r.left-size/2}px;top:${e.clientY-r.top-size/2}px`;
+                card.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 700);
+            });
+        });
+
+        // ── Typing Code Widget ──────────────────────────────
+        const typingSpan = document.querySelector('#cw-typing .cw-str');
+        const words = ["'MySQL'", "'Docker'", "'Figma'", "'Leaflet'", "'Tailwind'", "'Git'", "'Postman'"];
+        let wIdx = 0, cIdx = 0, deleting = false;
+        function typeCode() {
+            const word = words[wIdx];
+            if (!deleting) {
+                cIdx++;
+                typingSpan.textContent = word.slice(0, cIdx);
+                if (cIdx === word.length) { deleting = true; setTimeout(typeCode, 1400); return; }
+            } else {
+                cIdx--;
+                typingSpan.textContent = word.slice(0, cIdx);
+                if (cIdx === 0) { deleting = false; wIdx = (wIdx + 1) % words.length; }
+            }
+            setTimeout(typeCode, deleting ? 60 : 100);
+        }
+        typeCode();
+
+        // ── Real GitHub Contribution Graph ─────────────────
+        (function () {
+            const g = document.getElementById('contrib-graph');
+            if (!g) return;
+
+            function renderCells(days) {
+                g.innerHTML = '';
+                // Group flat array into 7-day columns (weeks)
+                for (let w = 0; w < days.length; w += 7) {
+                    const col = document.createElement('div');
+                    col.className = 'contrib-col';
+                    const slice = days.slice(w, w + 7);
+                    slice.forEach(function(day) {
+                        const cell = document.createElement('div');
+                        const lvl = day.level || 0;
+                        cell.className = 'contrib-cell' + (lvl ? ' l' + lvl : '');
+                        const cnt = day.count || 0;
+                        cell.title = cnt + ' contribution' + (cnt !== 1 ? 's' : '') + ' on ' + day.date;
+                        col.appendChild(cell);
+                    });
+                    g.appendChild(col);
+                }
+            }
+
+            function renderFake() {
+                let s = Date.now();
+                function rnd() { s ^= s << 13; s ^= s >> 7; s ^= s << 17; return (s >>> 0) / 0xFFFFFFFF; }
+                const days = [];
+                for (let i = 0; i < 26 * 7; i++) {
+                    const r = rnd();
+                    let level = 0;
+                    if (r > 0.6) level = 1;
+                    if (r > 0.75) level = 2;
+                    if (r > 0.88) level = 3;
+                    if (r > 0.95) level = 4;
+                    days.push({ date: '', count: level, level: level });
+                }
+                renderCells(days);
+            }
+
+            // Extract GitHub username from profile URL
+            const ghUrl = (g.dataset.github || '').trim();
+            const match = ghUrl.match(/github\.com\/([\w-]+)/i);
+            const username = match ? match[1] : null;
+
+            if (!username) { renderFake(); return; }
+
+            // Update the label
+            const lbl = g.previousElementSibling;
+            if (lbl && lbl.classList.contains('contrib-label')) {
+                lbl.textContent = '// ' + username + ' — contributions last year';
+            }
+
+            // Fetch real data from public contributions API (no token needed)
+            fetch('https://github-contributions-api.jogruber.de/v4/' + username + '?y=last')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data.contributions || !data.contributions.length) { renderFake(); return; }
+                    // Take last 26 weeks (182 days)
+                    const days = data.contributions.slice(-182);
+                    renderCells(days);
+                })
+                .catch(function() { renderFake(); });
+        })();
+
+        // ── Page Loader ──────────────────────────────────────
+        (function () {
+            // Matrix rain inside loader
+            const lc = document.getElementById('loader-matrix');
+            const lx = lc.getContext('2d');
+            lc.width  = window.innerWidth;
+            lc.height = window.innerHeight;
+            const lChars = '01{}[];()=><!-/function return const class if else'.split('');
+            let lCols = Math.floor(lc.width / 16);
+            let lDrops = Array(lCols).fill(1);
+            const lDraw = () => {
+                lx.fillStyle = 'rgba(10,10,13,0.06)';
+                lx.fillRect(0, 0, lc.width, lc.height);
+                lx.fillStyle = '#d4a44c';
+                lx.font = '12px Courier New';
+                lDrops.forEach((y, i) => {
+                    lx.fillText(lChars[Math.floor(Math.random() * lChars.length)], i * 16, y * 16);
+                    if (y * 16 > lc.height && Math.random() > 0.975) lDrops[i] = 0;
+                    lDrops[i]++;
+                });
+            };
+            const lInt = setInterval(lDraw, 50);
+
+            // Terminal animation sequence
+            const fill   = document.getElementById('lt-fill');
+            const pct    = document.getElementById('lt-pct');
+            const sub    = document.getElementById('loader-sub');
+
+            const steps = [
+                { id: 'll-1', p: 18,  msg: 'Booting framework',   delay: 300  },
+                { id: 'll-2', p: 38,  msg: 'Connecting database',  delay: 750  },
+                { id: 'll-3', p: 60,  msg: 'Loading portfolio',    delay: 1150 },
+                { id: 'll-4', p: 80,  msg: 'Compiling assets',     delay: 1550 },
+                { id: 'll-5', p: 100, msg: 'Ready!',               delay: 1950 },
+            ];
+
+            steps.forEach(({ id, p, msg, delay }) => {
+                setTimeout(() => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.add('lt-show');
+                    fill.style.width = p + '%';
+                    pct.textContent  = p + '%';
+                    if (sub) sub.textContent = msg;
+                }, delay);
+            });
+
+            // Hide loader after page loads + minimum display time
+            const loader   = document.getElementById('page-loader');
+            const minWait  = new Promise(r => setTimeout(r, 2400));
+            const pageLoad = new Promise(r => {
+                if (document.readyState === 'complete') r();
+                else window.addEventListener('load', r, { once: true });
+            });
+
+            Promise.all([minWait, pageLoad]).then(() => {
+                clearInterval(lInt);
+                loader.classList.add('loader-hide');
+                setTimeout(() => loader.remove(), 1000);
+            });
+        })();
+    </script>
+    <script>
+        // ── Code Widget Toggle ──────────────────────────
+        (function() {
+            const widget = document.getElementById('code-widget');
+            const closeBtn = document.querySelector('.cw-dot.r');
+            const restoreBtn = document.getElementById('cw-restore-btn');
+            
+            if (!widget || !closeBtn || !restoreBtn) return;
+
+            closeBtn.style.cursor = 'pointer';
+            closeBtn.setAttribute('title', 'Close Terminal');
+
+            closeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                widget.style.opacity = '0';
+                widget.style.transform = 'translateY(20px) scale(0.95)';
+                setTimeout(() => {
+                    widget.style.display = 'none';
+                    restoreBtn.style.display = 'flex';
+                    setTimeout(() => {
+                        restoreBtn.style.opacity = '1';
+                        restoreBtn.style.transform = 'scale(1)';
+                    }, 50);
+                }, 300);
+            });
+
+            restoreBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                restoreBtn.style.opacity = '0';
+                restoreBtn.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    restoreBtn.style.display = 'none';
+                    widget.style.display = 'block';
+                    setTimeout(() => {
+                        widget.style.opacity = '1';
+                        widget.style.transform = 'none';
+                    }, 50);
+                }, 200);
+            });
+        })();
+    </script>
 </body>
 </html>
