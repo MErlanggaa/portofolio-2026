@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Filament\Admin\Resources\ProfileResource\Pages;
+
+use App\Filament\Admin\Resources\ProfileResource;
+use Filament\Resources\Pages\EditRecord;
+
+class EditProfile extends EditRecord
+{
+    protected static string $resource = ProfileResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            // No delete actions
+        ];
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('edit', ['record' => $this->record]);
+    }
+}
