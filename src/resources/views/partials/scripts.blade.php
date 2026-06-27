@@ -274,16 +274,14 @@
         const volSlider  = document.getElementById('lp-volume-slider');
 
         // Restore persisted settings
-        let lastVolume   = parseFloat(localStorage.getItem('lofi_volume') || '0.5');
-        let isMuted      = localStorage.getItem('lofi_muted') === 'true';
-        let isPlaying    = false;
+        // NOTE: muted state is SESSION-ONLY (not persisted) — refresh always restores volume
+        let lastVolume    = parseFloat(localStorage.getItem('lofi_volume') || '0.5');
+        let isPlaying     = false;
         let unmuteHandled = false;
 
-        // Init slider/icon from saved prefs (audio itself is muted by html attr)
-        volSlider.value = lastVolume;
-        volIcon.className = isMuted ? 'fa-solid fa-volume-xmark'
-            : lastVolume < 0.5 ? 'fa-solid fa-volume-low'
-            : 'fa-solid fa-volume-high';
+        // Init slider/icon from saved volume (audio itself starts muted via html attr)
+        volSlider.value   = lastVolume;
+        volIcon.className = lastVolume < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
 
         // ── UI helpers ────────────────────────────────────────
         function markPlaying() {
@@ -317,9 +315,11 @@
                 return;
             }
 
-            // Resume: set real volume then unmute
-            audio.volume = isMuted ? 0 : lastVolume;
+            // Resume: always restore to lastVolume (mute is session-only, not persisted)
             audio.muted  = false;
+            audio.volume = lastVolume;
+            volSlider.value   = lastVolume;
+            volIcon.className = lastVolume < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
 
             if (!audio.paused) {
                 markPlaying();
