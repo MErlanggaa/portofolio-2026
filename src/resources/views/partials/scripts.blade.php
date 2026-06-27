@@ -264,158 +264,149 @@
         })();
 
         // ── Lofi Player (Audio Stream) ────────────────────────
-        const player     = document.getElementById('lofi-player');
-        const audio      = document.getElementById('lp-audio');
-        const playToggle = document.getElementById('lp-play-toggle');
-        const playIcon   = document.getElementById('lp-play-icon');
-        const statusText = document.getElementById('lp-status-text');
-        const volToggle  = document.getElementById('lp-volume-toggle');
-        const volIcon    = document.getElementById('lp-volume-icon');
-        const volSlider  = document.getElementById('lp-volume-slider');
+        (function () {
+            const player     = document.getElementById('lofi-player');
+            const audio      = document.getElementById('lp-audio');
+            const playToggle = document.getElementById('lp-play-toggle');
+            const playIcon   = document.getElementById('lp-play-icon');
+            const statusText = document.getElementById('lp-status-text');
+            const volToggle  = document.getElementById('lp-volume-toggle');
+            const volIcon    = document.getElementById('lp-volume-icon');
+            const volSlider  = document.getElementById('lp-volume-slider');
 
-        // Restore persisted settings
-        // NOTE: muted state is SESSION-ONLY (not persisted) — refresh always restores volume
-        let lastVolume    = parseFloat(localStorage.getItem('lofi_volume') || '0.5');
-        let isPlaying     = false;
-        let unmuteHandled = false;
+            // Volume persists across sessions; play state only persists when USER pauses
+            let lastVolume = parseFloat(localStorage.getItem('lofi_volume') || '0.5');
+            let isPlaying  = false;
+            let activated  = false;
 
-        // Init slider/icon from saved volume (audio itself starts muted via html attr)
-        volSlider.value   = lastVolume;
-        volIcon.className = lastVolume < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
-
-        // ── UI helpers ────────────────────────────────────────
-        function markPlaying() {
-            player.classList.add('playing');
-            playIcon.className     = 'fa-solid fa-pause';
-            statusText.textContent = 'Playing 🎵';
-            isPlaying = true;
-            localStorage.setItem('lofi_play_state', 'playing');
-        }
-        function markPaused() {
-            player.classList.remove('playing');
-            playIcon.className     = 'fa-solid fa-play';
-            statusText.textContent = 'Paused';
-            isPlaying = false;
-            localStorage.setItem('lofi_play_state', 'paused');
-        }
-
-        // ── Unmute logic ──────────────────────────────────────
-        // Called once on first user interaction (or immediately if page was
-        // previously interacted with — document.hasFocus() + user gesture flag).
-        function unmute() {
-            if (unmuteHandled) return;
-            unmuteHandled = true;
-
-            const explicitPause = localStorage.getItem('lofi_play_state') === 'paused';
-            if (explicitPause) {
-                // User deliberately paused last session → keep paused but unmute audio
-                audio.pause();
-                audio.muted = false;
-                markPaused();
-                return;
-            }
-
-            // Resume: always restore to lastVolume (mute is session-only, not persisted)
-            audio.muted  = false;
-            audio.volume = lastVolume;
+            // Init UI
             volSlider.value   = lastVolume;
             volIcon.className = lastVolume < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
 
-            if (!audio.paused) {
-                markPlaying();
-            } else {
-                // If browser paused during muted phase, re-trigger play
-                statusText.textContent = 'Loading…';
-                audio.play()
-                    .then(() => markPlaying())
-                    .catch(() => {
-                        statusText.textContent = 'Click to play';
-                        markPaused();
-                    });
-            }
-        }
-
-        // ── Autoplay strategy ─────────────────────────────────
-        // Audio element has autoplay+muted in HTML → browser starts it silently.
-        // We unmute on the very first user interaction (any event).
-        audio.addEventListener('play', () => {
-            if (!unmuteHandled) {
-                statusText.textContent = '🎵 Click anywhere to enable sound';
+            // ── UI State ──────────────────────────────────────
+            function uiPlaying() {
                 player.classList.add('playing');
-                playIcon.className = 'fa-solid fa-pause';
+                playIcon.className     = 'fa-solid fa-pause';
+                statusText.textContent = 'Playing 🎵';
                 isPlaying = true;
+                localStorage.setItem('lofi_play_state', 'playing');
             }
-        });
+            // Only call with persist=true when USER explicitly clicks pause
+            function uiPaused(persist) {
+                player.classList.remove('playing');
+                playIcon.className     = 'fa-solid fa-play';
+                statusText.textContent = persist ? 'Paused' : 'Click to play';
+                isPlaying = false;
+                if (persist) localStorage.setItem('lofi_play_state', 'paused');
+                // stream errors → never write 'paused' to storage
+            }
 
-        const interactionEvents = ['click','keydown','touchstart','scroll','pointermove'];
-        function onFirstInteraction() {
-            unmute();
-            interactionEvents.forEach(e => document.removeEventListener(e, onFirstInteraction));
-        }
-        interactionEvents.forEach(e =>
-            document.addEventListener(e, onFirstInteraction, { once: true, passive: true })
-        );
-
-        // If audio.autoplay is blocked entirely, fall back to manual play on click
-        audio.addEventListener('error', () => {
-            statusText.textContent = 'Click to play';
-            isPlaying = false;
-        });
-
-        // ── Manual toggle ─────────────────────────────────────
-        function togglePlay() {
-            // Make sure unmute ran first
-            if (!unmuteHandled) { unmute(); return; }
-
-            if (isPlaying) {
-                audio.pause();
-                markPaused();
-            } else {
+            // ── Attempt Play ──────────────────────────────────
+            function tryPlay() {
                 statusText.textContent = 'Loading…';
-                audio.muted = false;
-                audio.volume = isMuted ? 0 : lastVolume;
+                audio.muted  = false;
+                audio.volume = lastVolume;
                 audio.play()
-                    .then(() => markPlaying())
-                    .catch(() => { statusText.textContent = 'Error loading stream'; });
+                    .then(() => uiPlaying())
+                    .catch(() => uiPaused(false)); // error → no persist
             }
-        }
 
-        playToggle.addEventListener('click', togglePlay);
-        document.querySelector('.lp-disc').addEventListener('click', togglePlay);
+            // ── Activate on first user gesture ────────────────
+            // Audio starts muted via HTML attr — we unmute on first interaction
+            function activate() {
+                if (activated) return;
+                activated = true;
 
-        // ── Volume controls ───────────────────────────────────
-        volSlider.addEventListener('input', e => {
-            const v = parseFloat(e.target.value);
-            audio.volume = v;
-            audio.muted  = (v === 0);
-            if (v === 0) {
-                volIcon.className = 'fa-solid fa-volume-xmark';
-                localStorage.setItem('lofi_muted', 'true');
-            } else {
-                volIcon.className = v < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
-                localStorage.setItem('lofi_muted', 'false');
-                lastVolume = v;
-                localStorage.setItem('lofi_volume', String(v));
-            }
-        });
+                const userPaused = localStorage.getItem('lofi_play_state') === 'paused';
 
-        volToggle.addEventListener('click', () => {
-            if (audio.volume > 0 && !audio.muted) {
-                lastVolume = audio.volume;
-                localStorage.setItem('lofi_volume', String(lastVolume));
-                audio.muted     = true;
-                audio.volume    = 0;
-                volSlider.value = 0;
-                volIcon.className = 'fa-solid fa-volume-xmark';
-                localStorage.setItem('lofi_muted', 'true');
-            } else {
-                audio.muted     = false;
-                audio.volume    = lastVolume;
-                volSlider.value = lastVolume;
+                if (userPaused) {
+                    // User explicitly paused last session → respect that
+                    audio.pause();
+                    audio.muted  = false;
+                    audio.volume = lastVolume;
+                    uiPaused(false);
+                    return;
+                }
+
+                // Not paused → enable sound
+                audio.muted  = false;
+                audio.volume = lastVolume;
+                volSlider.value   = lastVolume;
                 volIcon.className = lastVolume < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
-                localStorage.setItem('lofi_muted', 'false');
+
+                if (!audio.paused) {
+                    uiPlaying(); // autoplay muted worked → just unmute & mark
+                } else {
+                    tryPlay();   // autoplay was blocked → force play with gesture
+                }
             }
-        });
+
+            // Show hint while audio loads muted
+            audio.addEventListener('play', () => {
+                if (!activated) {
+                    statusText.textContent = '🎵 Click anywhere for sound';
+                    player.classList.add('playing');
+                    playIcon.className = 'fa-solid fa-pause';
+                }
+            });
+
+            // Listen for first real user interaction
+            const events = ['click', 'scroll', 'keydown', 'touchstart', 'pointermove'];
+            function onFirstGesture() {
+                activate();
+                events.forEach(ev => document.removeEventListener(ev, onFirstGesture));
+            }
+            events.forEach(ev => document.addEventListener(ev, onFirstGesture, { passive: true }));
+
+            // Stream error → just show click-to-play, don't touch localStorage
+            audio.addEventListener('error', () => {
+                if (!isPlaying) uiPaused(false);
+            });
+
+            // ── Manual Toggle ─────────────────────────────────
+            function togglePlay(e) {
+                if (e) e.stopPropagation();
+                if (!activated) { activate(); return; }
+
+                if (isPlaying) {
+                    audio.pause();
+                    uiPaused(true); // user explicitly paused → persist
+                } else {
+                    tryPlay();
+                }
+            }
+
+            playToggle.addEventListener('click', togglePlay);
+            const disc = document.querySelector('.lp-disc');
+            if (disc) disc.addEventListener('click', togglePlay);
+
+            // ── Volume Controls ───────────────────────────────
+            volSlider.addEventListener('input', e => {
+                const v = parseFloat(e.target.value);
+                audio.volume = v;
+                if (v === 0) {
+                    volIcon.className = 'fa-solid fa-volume-xmark';
+                } else {
+                    lastVolume = v;
+                    localStorage.setItem('lofi_volume', String(v));
+                    volIcon.className = v < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
+                }
+            });
+
+            volToggle.addEventListener('click', () => {
+                if (audio.volume > 0) {
+                    lastVolume = audio.volume;
+                    localStorage.setItem('lofi_volume', String(lastVolume));
+                    audio.volume    = 0;
+                    volSlider.value = 0;
+                    volIcon.className = 'fa-solid fa-volume-xmark';
+                } else {
+                    audio.volume    = lastVolume;
+                    volSlider.value = lastVolume;
+                    volIcon.className = lastVolume < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
+                }
+            });
+        })();
 
         // ── Cursor Glow ─────────────────────────────────────
         const cursorGlow = document.getElementById('cursor-glow');
