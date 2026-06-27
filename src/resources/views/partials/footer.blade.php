@@ -34,7 +34,7 @@
             </button>
             <input type="range" class="lp-volume-slider" id="lp-volume-slider" min="0" max="1" step="0.05" value="0.5">
         </div>
-        <audio id="lp-audio" preload="none">
+        <audio id="lp-audio" autoplay muted preload="auto">
             <source src="https://streams.fluxfm.de/Chillhop/mp3-128/" type="audio/mpeg">
             <source src="https://streams.somafm.com/groovesalad-128-mp3" type="audio/mpeg">
         </audio>
