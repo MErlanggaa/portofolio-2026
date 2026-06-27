@@ -274,16 +274,23 @@
         const volSlider  = document.getElementById('lp-volume-slider');
 
         let isPlaying  = false;
-        let lastVolume = 0.5;
+        let lastVolume = parseFloat(localStorage.getItem('lofi_volume') || '0.5');
+        let isMuted    = localStorage.getItem('lofi_muted') === 'true';
 
-        audio.volume   = lastVolume;
+        audio.volume   = isMuted ? 0 : lastVolume;
         volSlider.value = lastVolume;
+        if (isMuted) {
+            volIcon.className = 'fa-solid fa-volume-xmark';
+        } else {
+            volIcon.className = lastVolume < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
+        }
 
         function startPlaying() {
             player.classList.add('playing');
             playIcon.className     = 'fa-solid fa-pause';
             statusText.textContent = 'Playing 🎵';
             isPlaying = true;
+            localStorage.setItem('lofi_play_state', 'playing');
         }
 
         function stopPlaying() {
@@ -292,6 +299,7 @@
             playIcon.className     = 'fa-solid fa-play';
             statusText.textContent = 'Paused';
             isPlaying = false;
+            localStorage.setItem('lofi_play_state', 'paused');
         }
 
         function togglePlay() {
@@ -309,16 +317,35 @@
             }
         }
 
-        // Autoplay on first user interaction
+        // Autoplay on first user interaction (only if not explicitly paused by user previously)
         const autoEvents = ['click','keydown','touchstart','mousedown','pointerdown','scroll'];
         const tryAutoplay = () => {
-            if (!isPlaying) {
+            const savedState = localStorage.getItem('lofi_play_state') || 'playing';
+            if (savedState === 'playing' && !isPlaying) {
+                statusText.textContent = 'Loading…';
                 audio.load();
-                audio.play().then(() => startPlaying()).catch(() => {});
+                audio.play()
+                    .then(() => startPlaying())
+                    .catch(err => {
+                        console.warn('Autoplay blocked:', err);
+                        statusText.textContent = 'Click to play';
+                    });
             }
             autoEvents.forEach(e => document.removeEventListener(e, tryAutoplay));
         };
-        autoEvents.forEach(e => document.addEventListener(e, tryAutoplay, { once: true, passive: true }));
+
+        const savedState = localStorage.getItem('lofi_play_state') || 'playing';
+        if (savedState === 'playing') {
+            // Attempt immediate play (browsers might allow if already interacted before)
+            audio.play()
+                .then(() => startPlaying())
+                .catch(() => {
+                    // Fallback to interaction if blocked
+                    autoEvents.forEach(e => document.addEventListener(e, tryAutoplay, { once: true, passive: true }));
+                });
+        } else {
+            statusText.textContent = 'Paused';
+        }
 
         playToggle.addEventListener('click', togglePlay);
         document.querySelector('.lp-disc').addEventListener('click', togglePlay);
@@ -326,22 +353,30 @@
         volSlider.addEventListener('input', e => {
             const v = parseFloat(e.target.value);
             audio.volume = v;
-            if (v === 0)      volIcon.className = 'fa-solid fa-volume-xmark';
-            else if (v < 0.5) volIcon.className = 'fa-solid fa-volume-low';
-            else               volIcon.className = 'fa-solid fa-volume-high';
-            if (v > 0) lastVolume = v;
+            if (v === 0) {
+                volIcon.className = 'fa-solid fa-volume-xmark';
+                localStorage.setItem('lofi_muted', 'true');
+            } else {
+                volIcon.className = v < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
+                localStorage.setItem('lofi_muted', 'false');
+                lastVolume = v;
+                localStorage.setItem('lofi_volume', v.toString());
+            }
         });
 
         volToggle.addEventListener('click', () => {
             if (audio.volume > 0) {
                 lastVolume      = audio.volume;
+                localStorage.setItem('lofi_volume', lastVolume.toString());
                 audio.volume    = 0;
                 volSlider.value = 0;
                 volIcon.className = 'fa-solid fa-volume-xmark';
+                localStorage.setItem('lofi_muted', 'true');
             } else {
                 audio.volume    = lastVolume;
                 volSlider.value = lastVolume;
                 volIcon.className = lastVolume < 0.5 ? 'fa-solid fa-volume-low' : 'fa-solid fa-volume-high';
+                localStorage.setItem('lofi_muted', 'false');
             }
         });
 
