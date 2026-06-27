@@ -2529,19 +2529,20 @@
             let prevDx   = 0, prevDy = 0;
 
             function resizeCanvas() {
-                const r = scene.getBoundingClientRect();
-                canvas.width  = r.width;
-                canvas.height = r.height;
+                const w = scene.offsetWidth;
+                const h = scene.offsetHeight;
+                if (canvas.width !== w || canvas.height !== h) {
+                    canvas.width  = w;
+                    canvas.height = h;
+                }
             }
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
 
             function getPinCenter() {
-                const pr = pinEl.getBoundingClientRect();
-                const sr = scene.getBoundingClientRect();
                 return {
-                    x: pr.left + pr.width  / 2 - sr.left,
-                    y: pr.top  + pr.height / 2 - sr.top,
+                    x: pinEl.offsetLeft + pinEl.offsetWidth  / 2,
+                    y: pinEl.offsetTop  + pinEl.offsetHeight / 2,
                 };
             }
 
@@ -2579,6 +2580,7 @@
             }
 
             function tick() {
+                resizeCanvas();
                 const pin = getPinCenter();
 
                 if (!isDrag) {

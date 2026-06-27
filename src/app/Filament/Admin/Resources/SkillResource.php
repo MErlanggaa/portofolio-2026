@@ -38,11 +38,11 @@ class SkillResource extends Resource
                             ])
                             ->required()
                             ->default('Frontend'),
-                        Forms\Components\Slider::make('proficiency')
+                        Forms\Components\TextInput::make('proficiency')
                             ->label('Proficiency Level (%)')
-                            ->min(0)
-                            ->max(100)
-                            ->step(5)
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
                             ->default(80)
                             ->required()
                             ->columnSpanFull(),
