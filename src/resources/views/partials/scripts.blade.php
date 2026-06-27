@@ -301,14 +301,34 @@
                 // stream errors → never write 'paused' to storage
             }
 
-            // ── Attempt Play ──────────────────────────────────
+            // ── Attempt Play (with source fallback cycling) ───
+            const sources = [
+                'https://ice2.somafm.com/groovesalad-128-mp3',
+                'https://ice1.somafm.com/groovesalad-128-mp3',
+                'https://ice4.somafm.com/groovesalad-128-mp3',
+            ];
+            let srcIdx = 0;
+
             function tryPlay() {
                 statusText.textContent = 'Loading…';
                 audio.muted  = false;
                 audio.volume = lastVolume;
+
+                // Set the current source
+                audio.src = sources[srcIdx];
+                audio.load();
+
                 audio.play()
                     .then(() => uiPlaying())
-                    .catch(() => uiPaused(false)); // error → no persist
+                    .catch(() => {
+                        srcIdx++;
+                        if (srcIdx < sources.length) {
+                            tryPlay(); // try next source
+                        } else {
+                            srcIdx = 0; // reset for next manual attempt
+                            uiPaused(false);
+                        }
+                    });
             }
 
             // ── Activate on first user gesture ────────────────
