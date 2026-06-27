@@ -29,15 +29,17 @@ class SkillResource extends Resource
                             ->maxLength(255),
                         Forms\Components\Select::make('category')
                             ->options([
-                                'Frontend' => 'Frontend',
-                                'Backend' => 'Backend',
-                                'Devops' => 'Devops / Cloud',
-                                'Mobile' => 'Mobile Development',
+                                'Programming Languages' => 'Programming Languages',
+                                'Frameworks & Libraries' => 'Frameworks & Libraries',
+                                'Database' => 'Database',
+                                'API & Development Tools' => 'API & Development Tools',
+                                'DevOps & Deployment' => 'DevOps & Deployment',
+                                'Version Control & Design' => 'Version Control & Design',
+                                'Technical Support' => 'Technical Support',
                                 'Soft Skills' => 'Soft Skills',
-                                'Tools / Others' => 'Tools / Others',
                             ])
                             ->required()
-                            ->default('Frontend'),
+                            ->default('Programming Languages'),
                         Forms\Components\TextInput::make('proficiency')
                             ->label('Proficiency Level (%)')
                             ->numeric()
@@ -72,12 +74,14 @@ class SkillResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('category')
                     ->options([
-                        'Frontend' => 'Frontend',
-                        'Backend' => 'Backend',
-                        'Devops' => 'Devops / Cloud',
-                        'Mobile' => 'Mobile Development',
+                        'Programming Languages' => 'Programming Languages',
+                        'Frameworks & Libraries' => 'Frameworks & Libraries',
+                        'Database' => 'Database',
+                        'API & Development Tools' => 'API & Development Tools',
+                        'DevOps & Deployment' => 'DevOps & Deployment',
+                        'Version Control & Design' => 'Version Control & Design',
+                        'Technical Support' => 'Technical Support',
                         'Soft Skills' => 'Soft Skills',
-                        'Tools / Others' => 'Tools / Others',
                     ]),
             ])
             ->actions([

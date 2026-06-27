@@ -587,6 +587,7 @@
         /* ── LANYARD (canvas physics) ── */
         .lanyard-scene {
             position: relative;
+            width: 100%;       /* ← must be explicit so absolute children don't collapse it */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -2597,10 +2598,9 @@
                 const cardX = pin.x + Math.sin(rad) * totalLen;   // card-hole x
                 const cardY = pin.y + Math.cos(rad) * totalLen;   // card-hole y
 
-                // Draw rope on canvas
+                 // Draw rope then position the card so its top-center aligns with cardX,cardY
                 drawRope(pin.x, pin.y, cardX, cardY);
 
-                // Position the card — place it so its top-center aligns with cardX,cardY
                 const cardW = swing.offsetWidth  || 210;
                 const cardH = swing.offsetHeight || 290;
                 swing.style.left      = (cardX - cardW / 2) + 'px';
